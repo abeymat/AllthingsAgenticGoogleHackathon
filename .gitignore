@@ -1,0 +1,27 @@
+# Environment & Secrets
+.env
+*.key
+*.pem
+*.crt
+server.key
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+
+# Salesforce CLI
+.sf/
+.sfdx/
+
+# Node / Frontend
+node_modules/
+dist/
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
