@@ -6,47 +6,59 @@ private class StudentApplicationControllerTest {
         List<Lead> testApplications = new List<Lead>();
         for (Integer i = 0; i < 5; i++) {
             testApplications.add(new Lead(
-                FirstName = 'Student' + i,
-                LastName = 'Applicant' + i,
+                FirstName = 'TestStudent',
+                LastName = 'Applicant ' + i,
+                Company = 'Applicant Self',
                 Email = 'student' + i + '@example.com',
-                Phone = '555-010' + i,
-                Company = 'Higher Education Prospect',
-                Status = 'Open - Not Contacted',
-                LeadSource = 'Web'
+                Phone = '555000000' + i,
+                Status = 'Open - Not Contacted'
             ));
         }
         insert testApplications;
     }
 
     @isTest
-    static void testSubmitApplicationSuccess() {
+    static void testGetStudentApplicationsSuccess() {
         Test.startTest();
-        Lead result = StudentApplicationController.submitApplication(
-            'Alex',
-            'Smith',
-            'alex.smith@example.com',
-            '555-9876',
-            'Higher Education Prospect'
-        );
+        List<Lead> results = StudentApplicationController.getStudentApplications();
         Test.stopTest();
 
-        System.assertNotEquals(null, result, 'Returned Lead record should not be null.');
-        System.assertNotEquals(null, result.Id, 'Returned Lead should have a valid Salesforce Id.');
+        Assert.isNotNull(results, 'Results list should not be null.');
+        Assert.areEqual(5, results.size(), 'Expected 5 student application records to be retrieved.');
+    }
 
-        Lead insertedLead = [SELECT Id, FirstName, LastName, Email, Phone, Company FROM Lead WHERE Id = :result.Id];
-        System.assertEquals('Alex', insertedLead.FirstName, 'First name should match submitted value.');
-        System.assertEquals('Smith', insertedLead.LastName, 'Last name should match submitted value.');
-        System.assertEquals('alex.smith@example.com', insertedLead.Email, 'Email should match submitted value.');
+    @isTest
+    static void testSubmitApplicationSuccess() {
+        Lead newApplicant = new Lead(
+            FirstName = 'Jane',
+            LastName = 'Doe',
+            Company = 'Applicant Self',
+            Email = 'jane.doe@example.com',
+            Phone = '5551234567'
+        );
+
+        Test.startTest();
+        Lead insertedApplicant = StudentApplicationController.submitApplication(newApplicant);
+        Test.stopTest();
+
+        Assert.isNotNull(insertedApplicant, 'Inserted applicant record should not be null.');
+        Assert.isNotNull(insertedApplicant.Id, 'Inserted applicant should have a valid Salesforce ID.');
+        Assert.areEqual('Jane', insertedApplicant.FirstName, 'First name should match.');
+        Assert.areEqual('Doe', insertedApplicant.LastName, 'Last name should match.');
     }
 
     @isTest
     static void testSubmitApplicationException() {
+        // Omitting required field 'LastName' to trigger exception
+        Lead invalidApplicant = new Lead(
+            FirstName = 'InvalidApplicant'
+        );
+
         Boolean exceptionThrown = false;
 
         Test.startTest();
         try {
-            // Missing required LastName field to force DML exception
-            StudentApplicationController.submitApplication('Alex', null, 'alex.smith@example.com', '555-9876', 'Higher Education Prospect');
+            StudentApplicationController.submitApplication(invalidApplicant);
         } catch (AuraHandledException e) {
             exceptionThrown = true;
         } catch (Exception e) {
@@ -54,40 +66,29 @@ private class StudentApplicationControllerTest {
         }
         Test.stopTest();
 
-        System.assert(exceptionThrown, 'An exception should be caught when required fields are missing.');
+        Assert.isTrue(exceptionThrown, 'An exception should be thrown when attempting to insert an invalid record.');
     }
 
     @isTest
-    static void testGetStudentApplications() {
-        Test.startTest();
-        List<Lead> applications = StudentApplicationController.getStudentApplications();
-        Test.stopTest();
-
-        System.assertEquals(5, applications.size(), 'Should retrieve all 5 seeded student application leads.');
-    }
-
-    @isTest
-    static void testGetApplicationDetailsSuccess() {
-        Lead existingLead = [SELECT Id, FirstName, LastName FROM Lead LIMIT 1];
+    static void testUpdateApplicationStatusSuccess() {
+        Lead existingApplicant = [SELECT Id, Status FROM Lead WHERE Email = 'student0@example.com' LIMIT 1];
+        String updatedStatus = 'Working - Contacted';
 
         Test.startTest();
-        Lead result = StudentApplicationController.getApplicationDetails(existingLead.Id);
+        Lead result = StudentApplicationController.updateApplicationStatus(existingApplicant.Id, updatedStatus);
         Test.stopTest();
 
-        System.assertNotEquals(null, result, 'Application details should be returned.');
-        System.assertEquals(existingLead.Id, result.Id, 'Retrieved Lead Id should match requested Id.');
-        System.assertEquals(existingLead.FirstName, result.FirstName, 'Retrieved FirstName should match expected record.');
+        Assert.isNotNull(result, 'Result should not be null.');
+        Assert.areEqual(updatedStatus, result.Status, 'Status should be successfully updated.');
     }
 
     @isTest
-    static void testGetApplicationDetailsInvalidId() {
-        // Construct a non-existent Lead Id
-        String fakeId = Lead.sObjectType.getDescribe().getKeyPrefix() + '000000000000AAA';
+    static void testUpdateApplicationStatusException() {
         Boolean exceptionThrown = false;
 
         Test.startTest();
         try {
-            StudentApplicationController.getApplicationDetails((Id)fakeId);
+            StudentApplicationController.updateApplicationStatus(null, 'Working - Contacted');
         } catch (AuraHandledException e) {
             exceptionThrown = true;
         } catch (Exception e) {
@@ -95,6 +96,6 @@ private class StudentApplicationControllerTest {
         }
         Test.stopTest();
 
-        System.assert(exceptionThrown, 'Exception should be thrown when querying with an invalid Record Id.');
+        Assert.isTrue(exceptionThrown, 'An exception should be thrown when an invalid Record Id is provided.');
     }
 }
