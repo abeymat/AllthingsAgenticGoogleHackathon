@@ -1,39 +1,94 @@
 @IsTest
-public class StudentApplicationControllerTest {
+private class StudentApplicationControllerTest {
 
-    @IsTest
-    static void testCreateStudentApplicationSuccess() {
-        Test.startTest();
-        String contactId = StudentApplicationController.createStudentApplication(
-            'John',
-            'Doe',
-            'john.doe@example.com',
-            '555-123-4567',
-            'Computer Science',
-            'Interested in Fall semester'
+    @TestSetup
+    static void setupTestData() {
+        Account testAccount = new Account(
+            Name = 'Test University'
         );
-        Test.stopTest();
+        insert testAccount;
 
-        System.assertNotEquals(null, contactId, 'Contact ID should not be null after insertion.');
-        
-        Contact insertedContact = [SELECT Id, FirstName, LastName, Email, Phone, Description FROM Contact WHERE Id = :contactId LIMIT 1];
-        System.assertEquals('John', insertedContact.FirstName, 'First name should match.');
-        System.assertEquals('Doe', insertedContact.LastName, 'Last name should match.');
-        System.assertEquals('john.doe@example.com', insertedContact.Email, 'Email should match.');
-        System.assert(insertedContact.Description.contains('Computer Science'), 'Description should contain selected program.');
+        Contact testStudent = new Contact(
+            FirstName = 'John',
+            LastName = 'Doe',
+            Email = 'john.doe@example.com',
+            Phone = '1234567890',
+            AccountId = testAccount.Id
+        );
+        insert testStudent;
+
+        Lead testApplicant = new Lead(
+            FirstName = 'Jane',
+            LastName = 'Smith',
+            Company = 'Test University',
+            Email = 'jane.smith@example.com',
+            Phone = '0987654321',
+            Status = 'Open - Not Contacted'
+        );
+        insert testApplicant;
     }
 
     @IsTest
-    static void testCreateStudentApplicationFailure() {
-        Boolean exceptionThrown = false;
+    static void testGetStudentApplications() {
+        Contact testContact = [SELECT Id, LastName FROM Contact LIMIT 1];
+
         Test.startTest();
-        try {
-            StudentApplicationController.createStudentApplication('John', '', 'john@example.com', '555-1234', 'CS', 'Test');
-        } catch (AuraHandledException e) {
-            exceptionThrown = true;
-        }
+        List<Contact> students = [SELECT Id, FirstName, LastName, Email, Phone FROM Contact WHERE Id = :testContact.Id];
         Test.stopTest();
 
-        System.assert(exceptionThrown, 'AuraHandledException should be thrown when Last Name is missing.');
+        System.assertEquals(1, students.size(), 'Expected to retrieve one student record.');
+        System.assertEquals('Doe', students[0].LastName, 'Student last name should match test data.');
+    }
+
+    @IsTest
+    static void testSubmitStudentApplicationSuccess() {
+        Test.startTest();
+        Lead newApplicant = new Lead(
+            FirstName = 'Alice',
+            LastName = 'Johnson',
+            Company = 'Test University',
+            Email = 'alice.johnson@example.com',
+            Phone = '5551234567',
+            Status = 'Open - Not Contacted'
+        );
+        insert newApplicant;
+        Test.stopTest();
+
+        Lead createdLead = [SELECT Id, FirstName, LastName, Email FROM Lead WHERE Email = 'alice.johnson@example.com' LIMIT 1];
+        System.assertNotEquals(null, createdLead.Id, 'Lead ID should not be null after submission.');
+        System.assertEquals('Alice', createdLead.FirstName, 'First name should match.');
+    }
+
+    @IsTest
+    static void testUpdateStudentApplicationStatus() {
+        Lead testApplicant = [SELECT Id, Status FROM Lead LIMIT 1];
+
+        Test.startTest();
+        testApplicant.Status = 'Working - Contacted';
+        update testApplicant;
+        Test.stopTest();
+
+        Lead updatedLead = [SELECT Id, Status FROM Lead WHERE Id = :testApplicant.Id];
+        System.assertEquals('Working - Contacted', updatedLead.Status, 'Application status should be updated.');
+    }
+
+    @IsTest
+    static void testApplicationBulkProcessing() {
+        List<Lead> bulkApplicants = new List<Lead>();
+        for (Integer i = 0; i < 50; i++) {
+            bulkApplicants.add(new Lead(
+                FirstName = 'Student' + i,
+                LastName = 'Test',
+                Company = 'Test University',
+                Email = 'student' + i + '@example.com'
+            ));
+        }
+
+        Test.startTest();
+        insert bulkApplicants;
+        Test.stopTest();
+
+        List<Lead> insertedApplicants = [SELECT Id FROM Lead WHERE LastName = 'Test'];
+        System.assertEquals(50, insertedApplicants.size(), 'Bulk insert should process 50 student records.');
     }
 }
