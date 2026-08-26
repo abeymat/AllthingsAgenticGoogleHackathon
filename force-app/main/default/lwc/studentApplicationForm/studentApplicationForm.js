@@ -1,4 +1,4 @@
-import { LightningElement, api, track } from 'lwc';
+import { LightningElement, track, api } from 'lwc';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 
 export default class StudentApplicationForm extends LightningElement {
@@ -9,48 +9,81 @@ export default class StudentApplicationForm extends LightningElement {
     @track lastName = '';
     @track email = '';
     @track phone = '';
-    @track course = '';
+    @track company = '';
+    @track isLoading = false;
 
     handleInputChange(event) {
-        const field = event.target.dataset.id || event.target.name;
-        if (field === 'firstName') {
-            this.firstName = event.target.value;
-        } else if (field === 'lastName') {
-            this.lastName = event.target.value;
-        } else if (field === 'email') {
-            this.email = event.target.value;
-        } else if (field === 'phone') {
-            this.phone = event.target.value;
-        } else if (field === 'course') {
-            this.course = event.target.value;
+        const fieldName = event.target.name;
+        const fieldValue = event.target.value;
+
+        if (fieldName === 'firstName') {
+            this.firstName = fieldValue;
+        } else if (fieldName === 'lastName') {
+            this.lastName = fieldValue;
+        } else if (fieldName === 'email') {
+            this.email = fieldValue;
+        } else if (fieldName === 'phone') {
+            this.phone = fieldValue;
+        } else if (fieldName === 'company') {
+            this.company = fieldValue;
         }
     }
 
-    handleSuccess(event) {
-        const evt = new ShowToastEvent({
-            title: 'Application Submitted',
-            message: 'Student record created successfully. ID: ' + (event.detail ? event.detail.id : ''),
-            variant: 'success'
-        });
-        this.dispatchEvent(evt);
-        this.handleReset();
-    }
+    handleSubmit(event) {
+        event.preventDefault();
+        
+        const allValid = [...this.template.querySelectorAll('lightning-input')]
+            .reduce((validSoFar, inputCmp) => {
+                inputCmp.reportValidity();
+                return validSoFar && inputCmp.checkValidity();
+            }, true);
 
-    handleError(event) {
-        const evt = new ShowToastEvent({
-            title: 'Submission Error',
-            message: event.detail && event.detail.detail ? event.detail.detail : 'An unexpected error occurred.',
-            variant: 'error'
+        if (!allValid) {
+            this.showToast('Error', 'Please complete all required fields correctly.', 'error');
+            return;
+        }
+
+        this.isLoading = true;
+
+        const applicationData = {
+            firstName: this.firstName,
+            lastName: this.lastName,
+            email: this.email,
+            phone: this.phone,
+            company: this.company
+        };
+
+        const submitEvent = new CustomEvent('applicationsubmit', {
+            detail: applicationData
         });
-        this.dispatchEvent(evt);
+        this.dispatchEvent(submitEvent);
+
+        this.showToast('Success', 'Student application submitted successfully!', 'success');
+        this.handleReset();
+        this.isLoading = false;
     }
 
     handleReset() {
-        const inputFields = this.template.querySelectorAll('lightning-input-field');
+        this.firstName = '';
+        this.lastName = '';
+        this.email = '';
+        this.phone = '';
+        this.company = '';
+
+        const inputFields = this.template.querySelectorAll('lightning-input');
         if (inputFields) {
-            inputFields.forEach((field) => {
-                field.reset();
+            inputFields.forEach(field => {
+                field.value = '';
             });
         }
+    }
+
+    showToast(title, message, variant) {
+        const evt = new ShowToastEvent({
+            title: title,
+            message: message,
+            variant: variant
+        });
+        this.dispatchEvent(evt);
     }
 }
