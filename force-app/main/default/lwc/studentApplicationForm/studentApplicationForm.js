@@ -1,76 +1,53 @@
-import { LightningElement, track, api } from 'lwc';
+import { LightningElement, track } from 'lwc';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 
+/**
+ * @description LWC Controller for handling student registration applications.
+ */
 export default class StudentApplicationForm extends LightningElement {
-    @api recordId;
-    @api objectApiName;
+    @track formData = {
+        firstName: '',
+        lastName: '',
+        email: '',
+        phone: '',
+        birthdate: '',
+        program: '',
+        comments: ''
+    };
 
-    @track firstName = '';
-    @track lastName = '';
-    @track email = '';
-    @track phone = '';
-    @track company = '';
-    @track isLoading = false;
+    isLoading = false;
 
-    handleInputChange(event) {
-        const fieldName = event.target.name;
-        const fieldValue = event.target.value;
-
-        if (fieldName === 'firstName') {
-            this.firstName = fieldValue;
-        } else if (fieldName === 'lastName') {
-            this.lastName = fieldValue;
-        } else if (fieldName === 'email') {
-            this.email = fieldValue;
-        } else if (fieldName === 'phone') {
-            this.phone = fieldValue;
-        } else if (fieldName === 'company') {
-            this.company = fieldValue;
-        }
+    get programOptions() {
+        return [
+            { label: 'Computer Science', value: 'Computer Science' },
+            { label: 'Business Administration', value: 'Business Administration' },
+            { label: 'Engineering', value: 'Engineering' },
+            { label: 'Arts & Humanities', value: 'Arts & Humanities' },
+            { label: 'Data Science', value: 'Data Science' }
+        ];
     }
 
-    handleSubmit(event) {
-        event.preventDefault();
-        
-        const allValid = [...this.template.querySelectorAll('lightning-input')]
-            .reduce((validSoFar, inputCmp) => {
-                inputCmp.reportValidity();
-                return validSoFar && inputCmp.checkValidity();
-            }, true);
-
-        if (!allValid) {
-            this.showToast('Error', 'Please complete all required fields correctly.', 'error');
-            return;
+    handleInputChange(event) {
+        const field = event.target.dataset.field || event.target.name;
+        if (field) {
+            this.formData = {
+                ...this.formData,
+                [field]: event.target.value
+            };
         }
-
-        this.isLoading = true;
-
-        const applicationData = {
-            firstName: this.firstName,
-            lastName: this.lastName,
-            email: this.email,
-            phone: this.phone,
-            company: this.company
-        };
-
-        const submitEvent = new CustomEvent('applicationsubmit', {
-            detail: applicationData
-        });
-        this.dispatchEvent(submitEvent);
-
-        this.showToast('Success', 'Student application submitted successfully!', 'success');
-        this.handleReset();
-        this.isLoading = false;
     }
 
     handleReset() {
-        this.firstName = '';
-        this.lastName = '';
-        this.email = '';
-        this.phone = '';
-        this.company = '';
-
-        const inputFields = this.template.querySelectorAll('lightning-input');
+        this.formData = {
+            firstName: '',
+            lastName: '',
+            email: '',
+            phone: '',
+            birthdate: '',
+            program: '',
+            comments: ''
+        };
+        const inputFields = this.template.querySelectorAll('lightning-input, lightning-combobox, lightning-textarea');
         if (inputFields) {
             inputFields.forEach(field => {
                 field.value = '';
@@ -78,12 +55,42 @@ export default class StudentApplicationForm extends LightningElement {
         }
     }
 
-    showToast(title, message, variant) {
-        const evt = new ShowToastEvent({
-            title: title,
-            message: message,
-            variant: variant
-        });
-        this.dispatchEvent(evt);
+    handleSubmit(event) {
+        if (event) {
+            event.preventDefault();
+        }
+
+        const allValid = [
+            ...this.template.querySelectorAll('lightning-input, lightning-combobox, lightning-textarea')
+        ].reduce((validSoFar, inputCmp) => {
+            inputCmp.reportValidity();
+            return validSoFar && inputCmp.checkValidity();
+        }, true);
+
+        if (!allValid) {
+            this.dispatchEvent(
+                new ShowToastEvent({
+                    title: 'Validation Error',
+                    message: 'Please complete all required fields correctly before submitting.',
+                    variant: 'error'
+                })
+            );
+            return;
+        }
+
+        this.isLoading = true;
+
+        // Process application submission logic
+        setTimeout(() => {
+            this.isLoading = false;
+            this.dispatchEvent(
+                new ShowToastEvent({
+                    title: 'Application Submitted',
+                    message: 'Student application submitted successfully!',
+                    variant: 'success'
+                })
+            );
+            this.handleReset();
+        }, 1000);
     }
 }
