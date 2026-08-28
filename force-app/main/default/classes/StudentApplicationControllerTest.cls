@@ -1,91 +1,107 @@
 @IsTest
 private class StudentApplicationControllerTest {
 
-    @IsTest
-    static void testSubmitNewApplicationSuccess() {
-        StudentApplicationController.ApplicationWrapper appData = new StudentApplicationController.ApplicationWrapper();
-        appData.firstName = 'John';
-        appData.lastName = 'Doe';
-        appData.email = 'john.doe@example.com';
-        appData.phone = '555-0199';
-        appData.tuitionAmount = 5500.00;
-
-        Test.startTest();
-        Map<String, Object> result = StudentApplicationController.submitApplication(appData);
-        Test.stopTest();
-
-        System.assertEquals('SUCCESS', result.get('status'), 'Expected status to be SUCCESS');
-        System.assertNotEquals(null, result.get('contactId'), 'Contact ID should not be null');
-        System.assertNotEquals(null, result.get('opportunityId'), 'Opportunity ID should not be null');
-
-        List<Contact> contacts = [SELECT Id, Email FROM Contact WHERE Email = 'john.doe@example.com'];
-        System.assertEquals(1, contacts.size(), 'One contact record should exist');
-    }
-
-    @IsTest
-    static void testSubmitExistingContactApplication() {
-        Contact existing = new Contact(
-            FirstName = 'Jane',
-            LastName = 'Smith',
-            Email = 'jane.smith@example.com',
-            Phone = '111-222-3333'
+    @TestSetup
+    static void setupTestData() {
+        Account testAccount = new Account(
+            Name = 'Test University'
         );
-        insert existing;
+        insert testAccount;
 
-        StudentApplicationController.ApplicationWrapper appData = new StudentApplicationController.ApplicationWrapper();
-        appData.firstName = 'Jane';
-        appData.lastName = 'Smith';
-        appData.email = 'jane.smith@example.com';
-        appData.phone = '999-888-7777';
-        appData.tuitionAmount = 3000.00;
+        Contact testStudent = new Contact(
+            FirstName = 'Jane',
+            LastName = 'Doe',
+            Email = 'jane.doe@example.com',
+            Phone = '555-0199',
+            AccountId = testAccount.Id
+        );
+        insert testStudent;
 
-        Test.startTest();
-        Map<String, Object> result = StudentApplicationController.submitApplication(appData);
-        Test.stopTest();
-
-        System.assertEquals('SUCCESS', result.get('status'), 'Expected status to be SUCCESS');
-
-        Contact updatedContact = [SELECT Phone FROM Contact WHERE Id = :existing.Id];
-        System.assertEquals('999-888-7777', updatedContact.Phone, 'Contact phone should be updated');
+        Opportunity testTuitionFee = new Opportunity(
+            Name = 'Jane Doe - Fall 2025 Tuition',
+            StageName = 'Prospecting',
+            CloseDate = Date.today().addDays(30),
+            Amount = 5000.00,
+            AccountId = testAccount.Id
+        );
+        insert testTuitionFee;
     }
 
     @IsTest
-    static void testSubmitApplicationMissingRequiredFields() {
-        StudentApplicationController.ApplicationWrapper appData = new StudentApplicationController.ApplicationWrapper();
-        appData.firstName = 'NoLastName';
+    static void testGetStudentApplicationsSuccess() {
+        Contact student = [SELECT Id, LastName, Email FROM Contact WHERE LastName = 'Doe' LIMIT 1];
 
-        Boolean exceptionThrown = false;
+        Test.startTest();
+        List<Contact> students = StudentApplicationController.getStudentApplications();
+        Test.stopTest();
+
+        System.assertNotEquals(null, students, 'Student applications list should not be null.');
+        System.assert(students.size() > 0, 'Expected at least one student application record.');
+    }
+
+    @IsTest
+    static void testGetStudentDetailsById() {
+        Contact student = [SELECT Id, FirstName, LastName, Email FROM Contact WHERE LastName = 'Doe' LIMIT 1];
+
+        Test.startTest();
+        Contact result = StudentApplicationController.getStudentDetails(student.Id);
+        Test.stopTest();
+
+        System.assertNotEquals(null, result, 'Student detail should be returned.');
+        System.assertEquals('Jane', result.FirstName, 'First name should match.');
+    }
+
+    @IsTest
+    static void testSubmitApplication() {
+        Test.startTest();
+        Contact newStudent = new Contact(
+            FirstName = 'John',
+            LastName = 'Smith',
+            Email = 'john.smith@example.com'
+        );
+        Id studentId = StudentApplicationController.submitApplication(newStudent, 'Fall 2025', 4500.00);
+        Test.stopTest();
+
+        System.assertNotEquals(null, studentId, 'Inserted student application ID should not be null.');
+        Contact insertedContact = [SELECT Id, LastName FROM Contact WHERE Id = :studentId];
+        System.assertEquals('Smith', insertedContact.LastName, 'LastName should be Smith.');
+    }
+
+    @IsTest
+    static void testProcessTuitionPayment() {
+        Opportunity opp = [SELECT Id, StageName, Amount FROM Opportunity LIMIT 1];
+
+        Test.startTest();
+        Boolean paymentSuccess = StudentApplicationController.processTuitionPayment(opp.Id, 5000.00, 'Credit Card');
+        Test.stopTest();
+
+        System.assertEquals(true, paymentSuccess, 'Payment processing should return true for valid input.');
+        Opportunity updatedOpp = [SELECT Id, StageName FROM Opportunity WHERE Id = :opp.Id];
+        System.assertEquals('Closed Won', updatedOpp.StageName, 'Opportunity stage should be updated to Closed Won.');
+    }
+
+    @IsTest
+    static void testProcessTuitionPaymentInvalidAmount() {
+        Opportunity opp = [SELECT Id FROM Opportunity LIMIT 1];
+
         Test.startTest();
         try {
-            StudentApplicationController.submitApplication(appData);
-        } catch (AuraHandledException e) {
-            exceptionThrown = true;
+            StudentApplicationController.processTuitionPayment(opp.Id, -100.00, 'Credit Card');
+            System.assert(false, 'Expected Exception for negative payment amount.');
+        } catch (Exception ex) {
+            System.assertNotEquals(null, ex, 'Exception should be caught for invalid payment amount.');
         }
         Test.stopTest();
-
-        System.assertEquals(true, exceptionThrown, 'Expected AuraHandledException when required fields are missing');
     }
 
     @IsTest
-    static void testGetStudentTuitionApplications() {
-        Contact c = new Contact(FirstName = 'Alice', LastName = 'Wonder', Email = 'alice@example.com');
-        insert c;
-
-        Opportunity opp = new Opportunity(
-            Name = 'Alice Wonder - Tuition Application',
-            StageName = 'Prospecting',
-            CloseDate = System.today().addDays(10),
-            Amount = 4000.00,
-            ContactId = c.Id
-        );
-        insert opp;
-
+    static void testGetStudentDetailsInvalidId() {
         Test.startTest();
-        List<Opportunity> opps = StudentApplicationController.getStudentTuitionApplications('alice@example.com');
-        List<Opportunity> emptyOpps = StudentApplicationController.getStudentTuitionApplications('');
+        try {
+            Contact result = StudentApplicationController.getStudentDetails(null);
+        } catch (Exception ex) {
+            System.assertNotEquals(null, ex.getMessage(), 'Exception message should not be empty.');
+        }
         Test.stopTest();
-
-        System.assertEquals(1, opps.size(), 'Should find 1 application for student');
-        System.assertEquals(0, emptyOpps.size(), 'Should return empty list for blank email');
     }
 }
