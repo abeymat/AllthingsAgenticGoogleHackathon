@@ -11,7 +11,21 @@ public with sharing class StudentApplicationController {
     }
 
     @AuraEnabled
-    public static Id submitApplication(ApplicationWrapper appData) {
+    public static String submitApplication(String firstName, String lastName, String email) {
+        if (String.isBlank(lastName) || String.isBlank(email)) {
+            throw new AuraHandledException('Last Name and Email are required.');
+        }
+        Contact student = new Contact(
+            FirstName = firstName,
+            LastName = lastName,
+            Email = email
+        );
+        insert as user student;
+        return student.Id;
+    }
+
+    @AuraEnabled
+    public static Id submitApplicationWrapper(ApplicationWrapper appData) {
         if (appData == null) {
             throw new AuraHandledException('Application data cannot be null.');
         }

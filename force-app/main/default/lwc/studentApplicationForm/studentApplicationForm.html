@@ -1,7 +1,105 @@
 <template>
-    <lightning-card title="As a Higher Education Admissions Officer, I want a modern Salesforce portal component so prospective students can submit scholarship applications. LWC Form UI">
+    <lightning-card title="Student Scholarship Application Portal" icon-name="standard:education">
         <div class="slds-m-around_medium">
-            <p>Student Application Form Component</p>
+            <div class="slds-grid slds-gutters slds-m-bottom_small">
+                <div class="slds-col slds-size_1-of-2">
+                    <lightning-input 
+                        label="First Name" 
+                        name="firstName" 
+                        value={firstName} 
+                        onchange={handleInputChange} 
+                        required>
+                    </lightning-input>
+                </div>
+                <div class="slds-col slds-size_1-of-2">
+                    <lightning-input 
+                        label="Last Name" 
+                        name="lastName" 
+                        value={lastName} 
+                        onchange={handleInputChange} 
+                        required>
+                    </lightning-input>
+                </div>
+            </div>
+
+            <div class="slds-grid slds-gutters slds-m-bottom_small">
+                <div class="slds-col slds-size_1-of-2">
+                    <lightning-input 
+                        label="Email Address" 
+                        type="email" 
+                        name="email" 
+                        value={email} 
+                        onchange={handleInputChange} 
+                        required>
+                    </lightning-input>
+                </div>
+                <div class="slds-col slds-size_1-of-2">
+                    <lightning-input 
+                        label="Phone Number" 
+                        type="tel" 
+                        name="phone" 
+                        value={phone} 
+                        onchange={handleInputChange}>
+                    </lightning-input>
+                </div>
+            </div>
+
+            <div class="slds-grid slds-gutters slds-m-bottom_small">
+                <div class="slds-col slds-size_1-of-2">
+                    <lightning-input 
+                        label="High School / Previous Institution" 
+                        name="highSchool" 
+                        value={highSchool} 
+                        onchange={handleInputChange}>
+                    </lightning-input>
+                </div>
+                <div class="slds-col slds-size_1-of-2">
+                    <lightning-input 
+                        label="Cumulative GPA" 
+                        type="number" 
+                        step="0.01" 
+                        min="0" 
+                        max="4.0" 
+                        name="gpa" 
+                        value={gpa} 
+                        onchange={handleInputChange} 
+                        required>
+                    </lightning-input>
+                </div>
+            </div>
+
+            <div class="slds-m-bottom_small">
+                <lightning-combobox
+                    name="programOfInterest"
+                    label="Program of Interest"
+                    value={programOfInterest}
+                    placeholder="Select Program"
+                    options={programOptions}
+                    onchange={handleInputChange}
+                    required>
+                </lightning-combobox>
+            </div>
+
+            <div class="slds-m-bottom_small">
+                <lightning-textarea
+                    name="personalStatement"
+                    label="Personal Statement / Scholarship Justification"
+                    value={personalStatement}
+                    onchange={handleInputChange}
+                    placeholder="Briefly state your academic goals..."
+                    required>
+                </lightning-textarea>
+            </div>
+
+            <div class="slds-m-top_medium slds-text-align_right">
+                <lightning-button 
+                    label="Submit Scholarship Application" 
+                    variant="brand" 
+                    icon-name="utility:send" 
+                    onclick={handleSubmit} 
+                    disabled={isSubmitting}>
+                </lightning-button>
+            </div>
         </div>
     </lightning-card>
 </template>
