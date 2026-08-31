@@ -121,6 +121,64 @@ venv/bin/python3 test_e2e_sdlc_pipeline.py
 
 ---
 
+## 🧪 Reproducible Testing Instructions
+
+To evaluate and verify **NexusDev AI**, follow these step-by-step reproducible testing procedures:
+
+### Option A: Automated E2E Pipeline Execution (Recommended)
+Run the automated end-to-end SDLC pipeline test script, which executes all 5 agents, Firestore Memory Bank transitions, code self-correction, security static analysis, and magic link approval flows:
+```bash
+# Execute full SDLC pipeline test suite
+python3 test_e2e_sdlc_pipeline.py
+```
+**Expected Output:**
+* PM Decomposer Agent breaks down Jira Epic into User Stories & LWC/Apex specs.
+* Firestore Memory Bank state advances to `PENDING_APPROVAL_1`.
+* Developer Agent generates Apex/LWC code with self-correcting unit test retries.
+* Security & Governance Agent (Gemma 2 / Model Armor) verifies zero SOQL injection or secret leaks.
+* GitOps & Release Agents simulate branch creation and production staging.
+
+### Option B: Interactive Web Control Center Dashboard
+1. Start the server: `python3 backend/app/main.py`
+2. Open your browser and navigate to: **`http://localhost:8000/`**
+3. Observe live agent reasoning chains, real-time Firestore pipeline state transitions, active MCP tool registrations, and quantitative evaluation benchmarks.
+
+### Option C: API Endpoint Verification (cURL Tests)
+Verify individual platform microservices and Google Cloud integrations:
+
+```bash
+# 1. System Health Check
+curl -s http://localhost:8000/health
+
+# 2. Registered MCP Tools Gateway
+curl -s http://localhost:8000/api/v1/mcp/tools
+
+# 3. LLM-as-a-Judge Evaluation Benchmark
+curl -s http://localhost:8000/api/v1/eval/benchmark
+
+# 4. ADK Fleet Optimizer Profile
+curl -s http://localhost:8000/api/v1/adk/optimize
+
+# 5. OpenTelemetry Execution Traces
+curl -s http://localhost:8000/api/v1/telemetry/traces
+
+# 6. Simulate Cloud Scheduler Nightly Security Audit Cron
+curl -s -X POST http://localhost:8000/api/v1/cron/nightly-audit
+
+# 7. Simulate Cloud Pub/Sub Asynchronous Event Push
+curl -s -X POST http://localhost:8000/api/v1/pubsub/events \
+  -H "Content-Type: application/json" \
+  -d '{"message": {"data": "eyJldmVudF90eXBlIjogIkVQSUNfQ1JFQVRELCIgImVwaWNfa2V5IjogIlNDUlVNLTEyMyJ9"}}'
+```
+
+### Option D: Clean Up Test Artifacts
+To reset test pipeline state and memory cache back to baseline:
+```bash
+python3 cleanup_test_data.py
+```
+
+---
+
 ## 🔗 Endpoints Summary
 
 * **Web Control Center Dashboard:** `GET http://localhost:8000/`
@@ -133,3 +191,4 @@ venv/bin/python3 test_e2e_sdlc_pipeline.py
 * **ADK Fleet Optimization Profile:** `GET http://localhost:8000/api/v1/adk/optimize`
 * **Google Cloud Pub/Sub Push:** `POST http://localhost:8000/api/v1/pubsub/events`
 * **Google Cloud Scheduler Cron:** `POST http://localhost:8000/api/v1/cron/nightly-audit`
+
