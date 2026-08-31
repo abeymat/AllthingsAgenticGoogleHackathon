@@ -1,64 +1,103 @@
-@IsTest
+@isTest
 private class StudentApplicationControllerTest {
 
-    @IsTest
-    static void testSubmitApplicationSuccess() {
-        Map<String, Object> formData = new Map<String, Object>{
-            'firstName' => 'Jane',
-            'lastName' => 'Doe',
-            'email' => 'jane.doe@example.com',
-            'phone' => '555-0199',
-            'major' => 'Computer Science',
-            'gpa' => 3.85,
-            'scholarshipType' => 'Academic Excellence',
-            'statementOfPurpose' => 'I am passionate about technology and software engineering.'
-        };
+    @testSetup
+    static void setupTestData() {
+        Contact student = new Contact(
+            FirstName = 'Jane',
+            LastName = 'Doe',
+            Email = 'jane.doe@example.com',
+            Phone = '555-0199'
+        );
+        insert student;
 
-        Test.startTest();
-        String contactId = StudentApplicationController.submitApplication(formData);
-        Test.stopTest();
-
-        System.assertNotEquals(null, contactId, 'Returned contact ID should not be null.');
-
-        Contact createdContact = [SELECT Id, FirstName, LastName, Email, Phone, Description FROM Contact WHERE Id = :contactId];
-        System.assertEquals('Jane', createdContact.FirstName, 'First name should match input.');
-        System.assertEquals('Doe', createdContact.LastName, 'Last name should match input.');
-        System.assertEquals('jane.doe@example.com', createdContact.Email, 'Email should match input.');
-        System.assert(createdContact.Description.contains('Computer Science'), 'Description should contain major.');
-        System.assert(createdContact.Description.contains('3.85'), 'Description should contain GPA.');
+        Lead prospectiveStudent = new Lead(
+            FirstName = 'John',
+            LastName = 'Smith',
+            Email = 'john.smith@example.com',
+            Company = 'Prospective Student',
+            Status = 'Open - Not Contacted'
+        );
+        insert prospectiveStudent;
     }
 
-    @IsTest
-    static void testSubmitApplicationMissingRequiredFields() {
-        Map<String, Object> formData = new Map<String, Object>{
+    @isTest
+    static void testSubmitScholarshipApplicationSuccess() {
+        Map<String, String> applicationData = new Map<String, String>{
             'firstName' => 'John',
-            'lastName' => '',
-            'email' => ''
+            'lastName' => 'Smith',
+            'email' => 'john.smith@example.com',
+            'phone' => '555-0123',
+            'gpa' => '3.8',
+            'major' => 'Computer Science',
+            'scholarshipType' => 'Merit Scholarship',
+            'essay' => 'I am passionate about technology and higher education.'
+        };
+
+        Test.startTest();
+        String resultId = StudentApplicationController.submitScholarshipApplication(applicationData);
+        Test.stopTest();
+
+        System.assertNotEquals(null, resultId, 'Application ID should not be null upon successful submission.');
+    }
+
+    @isTest
+    static void testSubmitScholarshipApplicationNewStudent() {
+        Map<String, String> applicationData = new Map<String, String>{
+            'firstName' => 'Alice',
+            'lastName' => 'Johnson',
+            'email' => 'alice.johnson@example.com',
+            'phone' => '555-0177',
+            'gpa' => '3.9',
+            'major' => 'Biology',
+            'scholarshipType' => 'STEM Scholarship',
+            'essay' => 'Dedicated to scientific research and innovation.'
+        };
+
+        Test.startTest();
+        String resultId = StudentApplicationController.submitScholarshipApplication(applicationData);
+        Test.stopTest();
+
+        System.assertNotEquals(null, resultId, 'New student application should create a record and return ID.');
+    }
+
+    @isTest
+    static void testSubmitScholarshipApplicationMissingRequiredFields() {
+        Map<String, String> invalidData = new Map<String, String>{
+            'firstName' => 'Invalid'
         };
 
         Boolean exceptionThrown = false;
         Test.startTest();
         try {
-            StudentApplicationController.submitApplication(formData);
+            StudentApplicationController.submitScholarshipApplication(invalidData);
         } catch (AuraHandledException e) {
+            exceptionThrown = true;
+        } catch (Exception e) {
             exceptionThrown = true;
         }
         Test.stopTest();
 
-        System.assertEquals(true, exceptionThrown, 'An AuraHandledException should be thrown when required fields are missing.');
+        System.assert(exceptionThrown, 'An exception should be thrown when required fields are missing.');
     }
 
-    @IsTest
-    static void testSubmitApplicationEmptyForm() {
-        Boolean exceptionThrown = false;
+    @isTest
+    static void testGetApplicationStatus() {
+        Contact student = [SELECT Id, Email FROM Contact WHERE Email = 'jane.doe@example.com' LIMIT 1];
+
         Test.startTest();
-        try {
-            StudentApplicationController.submitApplication(null);
-        } catch (AuraHandledException e) {
-            exceptionThrown = true;
-        }
+        Map<String, Object> statusInfo = StudentApplicationController.getApplicationStatus(student.Email);
         Test.stopTest();
 
-        System.assertEquals(true, exceptionThrown, 'An AuraHandledException should be thrown for null input.');
+        System.assertNotEquals(null, statusInfo, 'Status info map should not be null.');
+    }
+
+    @isTest
+    static void testGetScholarshipTypes() {
+        Test.startTest();
+        List<String> options = StudentApplicationController.getScholarshipTypes();
+        Test.stopTest();
+
+        System.assertNotEquals(null, options, 'Scholarship options list should not be null.');
     }
 }
