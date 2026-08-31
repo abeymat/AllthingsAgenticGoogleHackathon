@@ -14,6 +14,10 @@
 
 ## 🏗️ 6-Layer Enterprise Platform Architecture
 
+![NexusDev AI 6-Layer Enterprise Platform Architecture Diagram](./NexusDev_AI_Architecture_Diagram.jpg)
+
+> 📄 **PDF Version**: Download printable high-resolution blueprint: [`NexusDev_AI_Architecture_Flow_Diagram.pdf`](./NexusDev_AI_Architecture_Flow_Diagram.pdf)
+
 ```mermaid
 flowchart TD
     subgraph Event & Cloud Trigger Layer
