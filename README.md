@@ -8,36 +8,41 @@
 
 ## 🌟 Executive Summary
 
-**NexusDev AI** is an autonomous, multi-agent software engineering network built on **Google ADK**, **Gemini 3.5 Pro**, and **Google Cloud Run** that automatically decomposes Jira Epics, writes production code and unit tests, and executes multi-environment deployments across Salesforce orgs. 
-
-By combining self-correcting background execution with interactive **Human-in-the-Loop (HITL) approval gates**, NexusDev AI transforms complex enterprise software delivery from weeks of manual friction into minutes of safe, governed execution.
+**NexusDev AI** is an autonomous **5-agent software engineering fleet** built on **Google ADK 2.0**, **Gemini 3.6 Flash / 3.5 Pro**, **Model Context Protocol (MCP)**, **Agent Skills**, and **Google Cloud Run** that automatically decomposes Jira Epics, writes production Apex & LWC code with self-correction, performs security static audits, manages Git version control, ingests Cloud Pub/Sub events, executes Cloud Scheduler cron audits, computes LLM-as-a-Judge evaluation benchmarks, dispatches email approval notifications, and manages multi-environment deployments across Salesforce orgs.
 
 ---
 
-## 🏗️ System Architecture
+## 🏗️ 6-Layer Enterprise Platform Architecture
 
 ```mermaid
 flowchart TD
-    subgraph Trigger & Input
-        A[Jira Epic Created] -->|Webhook / API| B(FastAPI Server)
+    subgraph Event & Cloud Trigger Layer
+        A1[Jira Webhook / REST API] -->|POST /api/v1/epics/decompose| B(FastAPI Server Engine)
+        A2[Google Cloud Pub/Sub] -->|Push POST /api/v1/pubsub/events| B
+        A3[Google Cloud Scheduler] -->|Cron POST /api/v1/cron/nightly-audit| B
     end
 
-    subgraph Google ADK & Gemini Multi-Agent Fleet
-        B --> C[PM Decomposer Agent<br/>Gemini 3.5 Pro]
-        C --> D[Human Approval #1<br/>Story Breakdown Sign-off]
-        D -->|Approved| E[Salesforce Developer Agent<br/>Gemini 3.5 Pro + SF CLI]
+    subgraph Google ADK 5-Agent Fleet + Native AFC
+        B --> C[1. PM Decomposer Agent<br/>Gemini 3.6 Flash / ADK]
+        C --> D[Human Approval #1<br/>Email Sign-off: decomposerEmail]
+        D -->|Approved| E[2. Salesforce Developer Agent<br/>Gemini 3.5 Pro / ADK]
         E --> F[Self-Correction Loop<br/>sf apex run test retries]
-        F --> G[Security & Governance Agent<br/>Model Armor / Gemma 2]
-        G --> H[Human Approval #2<br/>Code Diff & Preview Sign-off]
-        H -->|Approved| I[Enterprise Release Agent<br/>sf project deploy start]
-        I --> J[Human Approval #3<br/>Prod Release Sign-off]
-        J -->|Approved| K[Production Salesforce Org]
+        F --> G[3. Security & Governance Agent<br/>Model Armor / Gemma 2]
+        G --> H[4. GitOps Agent<br/>Gemini 3.6 Flash / ADK]
+        H --> I[Human Approval #2<br/>Email Sign-off: developerEmail]
+        I -->|Approved| J[5. Enterprise Release Agent<br/>Gemini 3.6 Flash / ADK]
+        J --> K[Human Approval #3<br/>Email Sign-off: releaseEmail]
+        K -->|Approved| L[Production Salesforce Org]
     end
 
-    subgraph State & Memory Bank
-        C -.-> L[(Google Firestore<br/>Memory Bank)]
-        E -.-> L
-        I -.-> L
+    subgraph Platform Services Layer
+        B <--> N[MCP Tools Gateway<br/>.agents/mcp_config.json]
+        S[Agent Skills Library<br/>.agents/skills/] -.-> C & E & G & J
+        B --> O[OpenTelemetry Engine<br/>GET /api/v1/telemetry/traces]
+        B --> P[LLM Eval Engine<br/>GET /api/v1/eval/benchmark]
+        B --> Q[Email Notification Service<br/>email_service.py]
+        B --> R[ADK Fleet Optimizer Engine<br/>GET /api/v1/adk/optimize]
+        C -.-> M[(Google Firestore Memory Bank)]
     end
 ```
 
@@ -47,12 +52,19 @@ flowchart TD
 
 | Layer | Google Product / Tool | Function |
 | :--- | :--- | :--- |
-| **Core AI Model** | **Gemini 3.5 Pro / Flash** | Story decomposition, Apex/LWC code generation, and code review reasoning chains. |
-| **Agent Framework** | **Google ADK** / GenAI SDK | Multi-agent orchestration, tool binding, and failure-tolerant execution. |
+| **Core AI Model** | **Gemini 3.6 Flash / 3.5 Pro** | Story decomposition, Apex/LWC code generation, and code review reasoning chains. |
+| **Agent Framework** | **Google ADK 2.0** / GenAI SDK | 5-Agent fleet orchestration, structured output, and Native Automatic Function Calling (`tools=[...]`). |
+| **ADK Optimization** | **ADK Fleet Optimizer** | Temperature hyperparameter tuning (0.0-0.2), AFC token reduction (~35%), and model fallback routing (`optimizer_service.py`). |
+| **Agent Skills** | **Antigravity Skills Engine** | `.agents/skills/` domain knowledge manuals (`salesforce-governance`, `gitops-conventions`, `epic-decomposition`). |
+| **Tool Protocol** | **Model Context Protocol (MCP)** | Standardized JSON-RPC tool binding across Jira, Salesforce DX, and Git servers (`.agents/mcp_config.json`). |
+| **Event Triggers** | **Google Cloud Pub/Sub** | Ingests real-time base64 asynchronous push messages (`POST /api/v1/pubsub/events`). |
+| **Scheduled Jobs** | **Google Cloud Scheduler** | Executes recurring nightly security governance audits (`POST /api/v1/cron/nightly-audit`). |
 | **Compute & Microservices** | **Google Cloud Run** | Containerized serverless execution of Python backend & Salesforce CLI (`sf`). |
 | **State & Memory Bank** | **Google Firestore** | Cross-session state persistence holding pipeline context across human approval wait cycles. |
 | **Security & Guardrails** | **Gemma 2 / Model Armor** | Static analysis scanning code for SOQL injection, hardcoded secrets, and PII leaks. |
-| **Observability** | **Vertex AI Telemetry / Cloud Logging** | OpenTelemetry-compliant structured audit logs tracing agent reasoning chains. |
+| **LLM Evaluation** | **LLM-as-a-Judge Eval Engine** | Quantitative benchmarks measuring self-correction recovery rate, security index, and latency (`eval_service.py`). |
+| **Approval Notifications**| **Email Notification Service** | Dispatches interactive HTML emails with Magic Approval Links to stage approvers (`decomposerEmail`, `developerEmail`, `releaseEmail`). |
+| **Observability** | **Vertex AI Telemetry / Cloud Logging** | OpenTelemetry-compliant structured audit logs (`GET /api/v1/telemetry/traces`). |
 
 ---
 
@@ -81,6 +93,11 @@ JIRA_USER_EMAIL=your-email@domain.com
 JIRA_API_TOKEN=your_jira_api_token
 GEMINI_API_KEY=your_gemini_api_key
 GCP_PROJECT_ID=nexusdev-ai-project
+
+# Approver Emails
+DECOMPOSER_APPROVER_EMAIL=decomposerEmail@nexusdev.ai
+DEVELOPER_APPROVER_EMAIL=developerEmail@nexusdev.ai
+RELEASE_APPROVER_EMAIL=releaseEmail@nexusdev.ai
 ```
 
 ### Step 2: Install Dependencies & Run Backend
@@ -97,37 +114,22 @@ python3 backend/app/main.py
 ```
 Backend will start on `http://localhost:8000`.
 
-### Step 3: Run via Docker (Option B)
+### Step 3: Run Full End-to-End Pipeline Test
 ```bash
-docker build -t nexusdev-ai -f backend/Dockerfile .
-docker run -p 8000:8000 --env-file .env nexusdev-ai
-```
-
-### Step 4: Deploy to Google Cloud Run
-```bash
-chmod +x deploy_cloud_run.sh
-./deploy_cloud_run.sh
+venv/bin/python3 test_e2e_sdlc_pipeline.py
 ```
 
 ---
 
-## 🧪 Verification & Endpoints
+## 🔗 Endpoints Summary
 
-| Endpoint | Method | Purpose |
-| :--- | :--- | :--- |
-| `/health` | GET | Backend health check & GCP status. |
-| `/api/v1/epics/decompose` | POST | Triggers PM Decomposer Agent (Gemini 3.5 Pro). |
-| `/api/v1/dev/generate-and-test` | POST | Triggers Developer Agent & Self-Correction Test Loop. |
-| `/api/v1/security/audit` | POST | Triggers Security & Governance Agent (Gemma 2). |
-| `/api/v1/approve/view` | GET | Renders interactive HTML Human Approval Portal. |
-
----
-
-## 🏅 Hackathon Submission Checklist
-
-- [x] **Gemini 3.5 Pro / Flash** integrated via Vertex AI / Gemini API.
-- [x] **Google ADK** multi-agent framework implemented.
-- [x] **Google Cloud Run** deployment script & Dockerfile provided.
-- [x] **Firestore Memory Bank** state persistence enabled.
-- [x] **Unedited Proof of Execution Video** (≤ 4 minutes).
-- [x] **Public GitHub Repository** with complete `README.md`.
+* **Web Control Center Dashboard:** `GET http://localhost:8000/`
+* **System Health Check:** `GET http://localhost:8000/health`
+* **Decompose Epic:** `POST http://localhost:8000/api/v1/epics/decompose`
+* **Human Approval Action:** `POST http://localhost:8000/api/v1/approve/action`
+* **Registered MCP Tools:** `GET http://localhost:8000/api/v1/mcp/tools`
+* **OpenTelemetry Traces:** `GET http://localhost:8000/api/v1/telemetry/traces`
+* **LLM Evaluation Benchmark:** `GET http://localhost:8000/api/v1/eval/benchmark`
+* **ADK Fleet Optimization Profile:** `GET http://localhost:8000/api/v1/adk/optimize`
+* **Google Cloud Pub/Sub Push:** `POST http://localhost:8000/api/v1/pubsub/events`
+* **Google Cloud Scheduler Cron:** `POST http://localhost:8000/api/v1/cron/nightly-audit`

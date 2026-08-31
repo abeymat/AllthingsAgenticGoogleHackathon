@@ -1,0 +1,19 @@
+{
+  "mcpServers": {
+    "jira-mcp-server": {
+      "command": "python3",
+      "args": ["backend/app/mcp/jira_mcp_server.py"],
+      "description": "MCP Server exposing Jira API tools for epic decomposition and story creation."
+    },
+    "salesforce-mcp-server": {
+      "command": "python3",
+      "args": ["backend/app/mcp/salesforce_mcp_server.py"],
+      "description": "MCP Server exposing Salesforce DX tools for JWT auth, Apex unit tests, and metadata deployments."
+    },
+    "git-mcp-server": {
+      "command": "python3",
+      "args": ["backend/app/mcp/git_mcp_server.py"],
+      "description": "MCP Server exposing GitOps tools for feature branch checkout, AI commit staging, and remote pushes."
+    }
+  }
+}

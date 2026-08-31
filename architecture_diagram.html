@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>NexusDev AI — System Architecture & Process Flow Blueprint</title>
+    <style>
+        @page {
+            size: A4 portrait;
+            margin: 15mm;
+        }
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #0b0f19;
+            color: #f8fafc;
+            margin: 0;
+            padding: 20px;
+            -webkit-print-color-adjust: exact;
+        }
+        .header {
+            border-bottom: 2px solid #38bdf8;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+        h1 {
+            color: #38bdf8;
+            font-size: 24px;
+            margin: 0 0 8px 0;
+        }
+        .subtitle {
+            color: #94a3b8;
+            font-size: 13px;
+        }
+        .badge {
+            display: inline-block;
+            background: #0284c7;
+            color: #ffffff;
+            font-size: 11px;
+            font-weight: bold;
+            padding: 3px 8px;
+            border-radius: 4px;
+            margin-right: 6px;
+        }
+        .section-title {
+            color: #f1f5f9;
+            font-size: 16px;
+            border-left: 4px solid #38bdf8;
+            padding-left: 10px;
+            margin: 25px 0 15px 0;
+        }
+        .diagram-box {
+            background: #161e31;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+        .mermaid {
+            display: flex;
+            justify-content: center;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 12px;
+        }
+        th, td {
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 10px 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #1e293b;
+            color: #38bdf8;
+            font-weight: bold;
+        }
+        tr:nth-child(even) {
+            background-color: #0f172a;
+        }
+        .footer {
+            margin-top: 40px;
+            text-align: center;
+            font-size: 11px;
+            color: #64748b;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 15px;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'dark',
+            flowchart: { curve: 'basis' }
+        });
+    </script>
+</head>
+<body>
+
+    <div class="header">
+        <h1>NexusDev AI — System Architecture & Process Flow Blueprint</h1>
+        <div class="subtitle">
+            <span class="badge">Google ADK 2.0</span>
+            <span class="badge">Gemini 3.6 Flash / 3.5 Pro</span>
+            <span class="badge">Google Cloud Run</span>
+            <span class="badge">Model Context Protocol</span>
+        </div>
+    </div>
+
+    <div class="section-title">🔄 1. End-to-End SDLC Process Flow Diagram</div>
+    <div class="diagram-box">
+        <pre class="mermaid">
+flowchart LR
+    IN1[Jira Epic / Webhook] --> API[FastAPI Server]
+    IN2[Cloud Pub/Sub Push] --> API
+    IN3[Cloud Scheduler Cron] --> API
+
+    subgraph STAGE 1: EPIC DECOMPOSITION
+        API --> AGENT1[Node 1: PM Decomposer Agent<br/>Gemini 3.6 Flash]
+        AGENT1 --> MAIL1[Send Stage 1 Email<br/>abeycm@gmail.com]
+        MAIL1 --> GATE1{Human Gate #1}
+    end
+
+    subgraph STAGE 2: DEVELOPMENT & GITOPS
+        GATE1 -->|Approved| AGENT2[Node 2: Developer Agent<br/>Gemini 3.5 Pro]
+        AGENT2 <-->|Self-Correction| TEST[SF CLI Unit Tests]
+        AGENT2 --> AGENT3[Node 3: Security Agent<br/>Gemma 2 Audit]
+        AGENT3 --> AGENT4[Node 4: GitOps Agent<br/>Gemini 3.6 Flash]
+        AGENT4 --> MAIL2[Send Stage 2 Email<br/>abeycm@gmail.com]
+        MAIL2 --> GATE2{Human Gate #2}
+    end
+
+    subgraph STAGE 3: ENTERPRISE RELEASE
+        GATE2 -->|Approved| AGENT5[Node 5: Release Agent<br/>Gemini 3.6 Flash]
+        AGENT5 --> QA_DEPLOY[QA Sandbox Deploy]
+        QA_DEPLOY --> MAIL3[Send Stage 3 Email<br/>abeycm@gmail.com]
+        MAIL3 --> GATE3{Human Gate #3}
+        GATE3 -->|Approved| PROD_DEPLOY[Production Org Release]
+    end
+        </pre>
+    </div>
+
+    <div class="section-title">🏗️ 2. 6-Layer Enterprise System Architecture Diagram</div>
+    <div class="diagram-box">
+        <pre class="mermaid">
+flowchart TD
+    subgraph Layer 1: Ingestion & Triggers
+        T1[Jira Cloud Webhook] --> API_SERVER[FastAPI Engine]
+        T2[Google Cloud Pub/Sub] --> API_SERVER
+        T3[Google Cloud Scheduler] --> API_SERVER
+    end
+
+    subgraph Layer 2: 5 ADK Autonomous Agents
+        API_SERVER --> A1[1. PM Decomposer Agent]
+        A1 --> A2[2. Salesforce Developer Agent]
+        A2 <--> A2_SF[Salesforce DX CLI]
+        A2 --> A3[3. Security Governance Agent]
+        A3 --> A4[4. GitOps Agent]
+        A4 --> A5[5. Enterprise Release Agent]
+    end
+
+    subgraph Layer 3: Tools & Skills
+        MCP[MCP Tool Servers Gateway] <--> A1 & A2 & A4 & A5
+        SKILLS[Agent Skills Library] -.-> A1 & A2 & A3 & A4 & A5
+    end
+
+    subgraph Layer 4: State Persistence
+        A1 & A2 & A5 <--> DB[(Google Cloud Firestore)]
+    end
+
+    subgraph Layer 5: HITL Email Governance
+        G1{Stage 1} --> EMAIL[Email Notification Service]
+        G2{Stage 2} --> EMAIL
+        G3{Stage 3} --> EMAIL
+        EMAIL --> INBOX[Human Approver Inbox: abeycm@gmail.com]
+    end
+
+    subgraph Layer 6: Observability & Eval
+        OTEL[OpenTelemetry Engine] <--> TRACES[GET /api/v1/telemetry/traces]
+        EVAL[LLM Eval Engine] <--> BENCH[GET /api/v1/eval/benchmark]
+        OPT[ADK Fleet Optimizer] <--> OPT_API[GET /api/v1/adk/optimize]
+    end
+
+    A5 --> QA_ORG[QA Sandbox Org]
+    A5 --> PROD_ORG[Production Org]
+        </pre>
+    </div>
+
+    <div class="section-title">🧩 Architectural Technical Matrix</div>
+    <table>
+        <thead>
+            <tr>
+                <th>Subsystem Layer</th>
+                <th>Google Technology / Framework</th>
+                <th>Enterprise Function</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Layer 1: Ingestion</strong></td>
+                <td>Google Cloud Pub/Sub, Cloud Scheduler, FastAPI</td>
+                <td>Real-time Webhook push ingestion, Pub/Sub events, and recurring nightly cron security audits (0 0 * * *).</td>
+            </tr>
+            <tr>
+                <td><strong>Layer 2: 5 ADK Agents</strong></td>
+                <td>Google ADK 2.0, Gemini 3.6 Flash / 3.5 Pro, Gemma 2</td>
+                <td>Autonomous code generation with SF CLI self-correction, static security auditing, GitOps, and release notes.</td>
+            </tr>
+            <tr>
+                <td><strong>Layer 3: Tools & Skills</strong></td>
+                <td>Model Context Protocol (MCP), Agent Skills</td>
+                <td>Standardized JSON-RPC tool binding across Jira, Salesforce DX, and Git servers + domain rule manuals.</td>
+            </tr>
+            <tr>
+                <td><strong>Layer 4: Memory Bank</strong></td>
+                <td>Google Cloud Firestore</td>
+                <td>Cross-session state persistence managing pipeline state across asynchronous Human-in-the-Loop approval gates.</td>
+            </tr>
+            <tr>
+                <td><strong>Layer 5: HITL Email</strong></td>
+                <td>Email Notification Service (smtplib)</td>
+                <td>Dispatches interactive HTML emails with Magic Approval Links to abeycm@gmail.com.</td>
+            </tr>
+            <tr>
+                <td><strong>Layer 6: Observability</strong></td>
+                <td>OpenTelemetry, Eval Engine, ADK Optimizer</td>
+                <td>Structured OpenTelemetry trace spans, quantitative LLM quality benchmark scores, and ~35% AFC token savings.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="footer">
+        NexusDev AI &bull; All Things Agentic Hackathon Submission &bull; Google & Devpost
+    </div>
+
+</body>
+</html>

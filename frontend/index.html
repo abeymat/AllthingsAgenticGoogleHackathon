@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NexusDev AI - Enterprise Agentic SDLC Control Center</title>
+    <title>NexusDev AI — Enterprise SDLC Operations Center</title>
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -11,8 +11,8 @@
     <style>
         :root {
             --bg-primary: #0b0f19;
-            --bg-card: rgba(22, 30, 49, 0.7);
-            --bg-card-hover: rgba(30, 41, 67, 0.8);
+            --bg-card: rgba(22, 30, 49, 0.75);
+            --bg-card-hover: rgba(30, 41, 67, 0.85);
             --border-color: rgba(255, 255, 255, 0.08);
             --accent-blue: #38bdf8;
             --accent-green: #34d399;
@@ -36,7 +36,7 @@
 
         header {
             padding: 20px 40px;
-            background: rgba(11, 15, 25, 0.8);
+            background: rgba(11, 15, 25, 0.85);
             backdrop-filter: blur(12px);
             border-bottom: 1px solid var(--border-color);
             display: flex;
@@ -46,11 +46,11 @@
 
         .logo-area { display: flex; align-items: center; gap: 12px; }
         .logo-icon {
-            width: 38px; height: 38px;
+            width: 40px; height: 40px;
             background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
             border-radius: 10px;
             display: flex; align-items: center; justify-content: center;
-            font-weight: 800; font-size: 20px; color: #0b0f19;
+            font-weight: 800; font-size: 22px; color: #0b0f19;
         }
         .logo-text h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; }
         .logo-text p { font-size: 12px; color: var(--text-muted); }
@@ -68,8 +68,8 @@
         main {
             flex: 1;
             padding: 30px 40px;
-            display: grid;
-            grid-template-columns: 1fr 380px;
+            display: flex;
+            flex-direction: column;
             gap: 24px;
         }
 
@@ -90,69 +90,86 @@
             padding-bottom: 12px;
         }
 
-        .form-group { display: flex; flex-direction: column; gap: 8px; }
-        label { font-size: 13px; color: var(--text-muted); font-weight: 500; }
-        input, select, textarea {
-            background: rgba(9, 13, 22, 0.8);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 12px;
-            color: white;
-            font-family: inherit; font-size: 14px;
-            transition: border-color 0.2s;
+        /* Active Pipeline Hero Banner */
+        .hero-banner {
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.12), rgba(192, 132, 252, 0.08));
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            border-radius: 16px;
+            padding: 24px;
+            display: flex; flex-direction: column; gap: 16px;
         }
-        input:focus, textarea:focus { outline: none; border-color: var(--accent-blue); }
-
-        .btn {
-            background: linear-gradient(135deg, var(--accent-blue), #0284c7);
-            color: #0b0f19; font-weight: 600; font-size: 14px;
-            padding: 12px; border: none; border-radius: 8px;
-            cursor: pointer; transition: transform 0.1s, opacity 0.2s;
+        .hero-header {
+            display: flex; justify-content: space-between; align-items: center;
         }
-        .btn:hover { opacity: 0.9; }
-        .btn:active { transform: scale(0.98); }
+        .hero-title { font-size: 18px; font-weight: 700; color: #ffffff; display: flex; align-items: center; gap: 10px; }
+        .hero-badge {
+            background: #0284c7; color: #ffffff;
+            font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 12px;
+        }
+        .hero-meta { display: flex; gap: 24px; font-size: 13px; color: var(--text-muted); }
+        .hero-meta strong { color: var(--text-main); }
 
-        /* Reasoning Console */
+        /* Stage Steps Indicator */
+        .stage-steps {
+            display: flex; justify-content: space-between; position: relative; margin-top: 10px;
+        }
+        .stage-step {
+            display: flex; flex-direction: column; align-items: center; gap: 6px; z-index: 2; width: 18%;
+        }
+        .step-circle {
+            width: 32px; height: 32px; border-radius: 50%;
+            background: rgba(255,255,255,0.08); border: 1px solid var(--border-color);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 13px; font-weight: 700; color: var(--text-muted);
+        }
+        .step-circle.complete { background: var(--accent-green); color: #0b0f19; border-color: var(--accent-green); }
+        .step-circle.active { background: var(--accent-blue); color: #0b0f19; border-color: var(--accent-blue); }
+        .step-label { font-size: 11.5px; color: var(--text-muted); font-weight: 500; text-align: center; }
+
+        /* Grid Layout */
+        .grid-container {
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            gap: 24px;
+        }
+
+        /* Console Box */
         .console-box {
             background: #060911;
             border: 1px solid var(--border-color);
-            border-radius: 10px;
-            padding: 16px;
+            border-radius: 12px;
+            padding: 18px;
             font-family: 'JetBrains Mono', monospace;
-            font-size: 12.5px;
+            font-size: 13px;
             color: #a5f3fc;
-            height: 320px;
+            height: 380px;
             overflow-y: auto;
-            display: flex; flex-direction: column; gap: 8px;
+            display: flex; flex-direction: column; gap: 10px;
         }
-        .log-entry { display: flex; gap: 10px; line-height: 1.5; }
-        .log-time { color: var(--text-muted); }
-        .log-agent { color: var(--accent-purple); font-weight: 600; }
+        .log-entry { display: flex; gap: 12px; line-height: 1.5; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 6px; }
+        .log-time { color: var(--text-muted); min-width: 75px; }
+        .log-agent { color: var(--accent-purple); font-weight: 600; min-width: 180px; }
         .log-msg { color: #f1f5f9; }
 
-        /* Pipeline Cards */
-        .pipeline-card {
-            background: rgba(9, 13, 22, 0.6);
+        /* Approval Card */
+        .approval-card {
+            background: rgba(9, 13, 22, 0.7);
             border: 1px solid var(--border-color);
             border-radius: 12px;
-            padding: 16px;
-            display: flex; flex-direction: column; gap: 12px;
+            padding: 18px;
+            display: flex; flex-direction: column; gap: 14px;
         }
-        .stage-steps {
-            display: flex; justify-content: space-between; position: relative; margin: 10px 0;
+        .btn {
+            background: linear-gradient(135deg, var(--accent-blue), #0284c7);
+            color: #0b0f19; font-weight: 700; font-size: 13.5px;
+            padding: 12px; border: none; border-radius: 8px;
+            cursor: pointer; transition: transform 0.1s, opacity 0.2s;
+            text-align: center; text-decoration: none; display: block;
         }
-        .step {
-            width: 28px; height: 28px; border-radius: 50%;
-            background: rgba(255,255,255,0.08); border: 1px solid var(--border-color);
-            display: flex; align-items: center; justify-content: center;
-            font-size: 12px; font-weight: 600; color: var(--text-muted);
-            z-index: 2;
-        }
-        .step.active { background: var(--accent-blue); color: #0b0f19; border-color: var(--accent-blue); }
-        .step.complete { background: var(--accent-green); color: #0b0f19; border-color: var(--accent-green); }
+        .btn:hover { opacity: 0.9; }
 
         footer {
-            padding: 16px 40px; border-top: 1px solid var(--border-color);
+            padding: 20px 40px; border-top: 1px solid var(--border-color);
             font-size: 13px; color: var(--text-muted); text-align: center;
         }
     </style>
@@ -164,99 +181,116 @@
             <div class="logo-icon">N</div>
             <div class="logo-text">
                 <h1>NexusDev AI</h1>
-                <p>Autonomous Enterprise SDLC & Governance Fleet</p>
+                <p>Autonomous Enterprise SDLC & Governance Operations Center</p>
             </div>
         </div>
         <div class="status-pill">
             <div class="dot"></div>
-            <span>Backend Online (Google Cloud Run + ADK)</span>
+            <span>Backend Online (Google Cloud Run + ADK 2.0)</span>
         </div>
     </header>
 
     <main>
-        <!-- Left Column: Operations & Console -->
-        <div style="display: flex; flex-direction: column; gap: 24px;">
-            <div class="panel">
-                <div class="panel-title">
-                    <span>🚀 Trigger New Autonomous SDLC Pipeline</span>
-                    <span style="font-size: 12px; color: var(--accent-blue);">Jira ➔ Gemini 3.5 Pro ➔ Salesforce DX</span>
+        <!-- Active SDLC Pipeline Hero Banner -->
+        <div class="hero-banner">
+            <div class="hero-header">
+                <div class="hero-title">
+                    <span>🔥 Active SDLC Pipeline: <span id="activeEpicKey">Awaiting Event...</span></span>
+                    <span class="hero-badge" id="activeStageBadge">LISTENING FOR WEBHOOKS</span>
                 </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-                    <div class="form-group">
-                        <label>Jira Domain & Project Key</label>
-                        <input type="text" value="abeycm.atlassian.net (SCRUM)" readonly>
-                    </div>
-                    <div class="form-group">
-                        <label>Select Jira Epic to Decompose</label>
-                        <input type="text" id="epicKeyInput" value="SCRUM-1" placeholder="e.g. SCRUM-1">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>Optional Human PM Feedback / Directives</label>
-                    <input type="text" id="feedbackInput" placeholder="e.g. Include validation for international student IDs and name LWC studentRegistrationForm">
-                </div>
-                <button class="btn" onclick="triggerDecomposition()">Decompose Epic & Launch Agent Fleet</button>
+                <span style="font-size: 13px; color: var(--accent-green);">Event Ingestion: Jira Cloud Webhook</span>
             </div>
 
-            <!-- Agent Telemetry Console -->
-            <div class="panel">
-                <div class="panel-title">
-                    <span>📡 Live Agent Fleet Telemetry & Reasoning Chain</span>
-                    <span style="font-size: 12px; color: var(--text-muted);">OpenTelemetry Stream</span>
+            <div class="hero-meta">
+                <div>Summary: <strong id="activeEpicSummary">Listening for new Jira Epic...</strong></div>
+                <div>Target Approver: <strong>abeycm@gmail.com</strong></div>
+                <div>Status: <strong style="color: var(--accent-blue);" id="activeStatus">Ready for Webhook Trigger</strong></div>
+            </div>
+
+            <!-- 6-Stage Agentic SDLC Process DAG Nodes -->
+            <div style="margin-top: 15px;">
+                <div style="font-size: 12px; color: var(--accent-blue); margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+                    <span>📍 SDLC PROCESS STAGES & HITL GOVERNANCE GATES</span>
+                    <span id="progressText" style="font-weight: 600; color: var(--accent-yellow);">Stage 1/3 — Awaiting PM Decomposition Approval</span>
                 </div>
-                <div class="console-box" id="consoleBox">
-                    <div class="log-entry">
-                        <span class="log-time">[18:32:00]</span>
-                        <span class="log-agent">SYSTEM:</span>
-                        <span class="log-msg">NexusDev AI Control Center initialized. Listening for webhooks...</span>
+                <div class="stage-steps">
+                    <div class="stage-step">
+                        <div class="step-circle" id="step1Circle">1</div>
+                        <div class="step-label">PM Decomposer<br/>(Gemini 3.6 Flash)</div>
+                    </div>
+                    <div class="stage-step">
+                        <div class="step-circle" id="step2Circle">2</div>
+                        <div class="step-label">SF Developer<br/>(Gemini 3.5 Pro)</div>
+                    </div>
+                    <div class="stage-step">
+                        <div class="step-circle" id="step3Circle">3</div>
+                        <div class="step-label">Security Audit<br/>(Gemma 2 Armor)</div>
+                    </div>
+                    <div class="stage-step">
+                        <div class="step-circle" id="step4Circle">4</div>
+                        <div class="step-label">GitOps PR<br/>(Commit & Branch)</div>
+                    </div>
+                    <div class="stage-step">
+                        <div class="step-circle" id="step5Circle">5</div>
+                        <div class="step-label">QA Sandbox Deploy<br/>(Pre-flight Check)</div>
+                    </div>
+                    <div class="stage-step">
+                        <div class="step-circle" id="step6Circle">6</div>
+                        <div class="step-label">Prod Live Release<br/>(Production Deploy)</div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Right Column: Active Pipelines & Approvals -->
-        <div style="display: flex; flex-direction: column; gap: 24px;">
+        <!-- 2 Column Operations Grid -->
+        <div class="grid-container">
+            <!-- Left Column: OpenTelemetry Stream Console -->
+            <div class="panel">
+                <div class="panel-title">
+                    <span>📡 Live Agent Fleet Telemetry & Reasoning Chain</span>
+                    <span style="font-size: 12px; color: var(--accent-blue);">OpenTelemetry / Google Cloud Trace</span>
+                </div>
+                <div class="console-box" id="consoleBox">
+                    <div class="log-entry">
+                        <span class="log-time">[SYSTEM]</span>
+                        <span class="log-agent">NexusDev AI Engine:</span>
+                        <span class="log-msg">Operations Center Online. Listening for Jira Webhook events...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Active Approvals -->
             <div class="panel">
                 <div class="panel-title">
                     <span>🛡️ Active HITL Approval Gates</span>
+                    <span style="font-size: 12px; color: var(--accent-green);">Email Alert Dispatched</span>
                 </div>
-                <div id="pipelineContainer" style="display: flex; flex-direction: column; gap: 16px;">
-                    <div class="pipeline-card">
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <strong style="font-size: 14px;">Epic SCRUM-1: Student App Form</strong>
-                            <span style="font-size: 11px; background: rgba(56,189,248,0.15); color: var(--accent-blue); padding: 2px 8px; border-radius: 10px;">DECOMPOSED</span>
-                        </div>
-                        <p style="font-size: 12px; color: var(--text-muted);">Decomposed into 3 tasks: Apex Controller, LWC Form, Unit Tests.</p>
-                        
-                        <div class="stage-steps">
-                            <div class="step complete" title="Decomposition Complete">1</div>
-                            <div class="step active" title="Approval #1 Pending">2</div>
-                            <div class="step" title="Salesforce Dev & Test">3</div>
-                            <div class="step" title="Staging Deploy">4</div>
-                            <div class="step" title="Prod Deploy">5</div>
-                        </div>
-
-                        <button class="btn" style="background: rgba(56,189,248,0.2); color: var(--accent-blue); border: 1px solid var(--accent-blue);" onclick="openApprovalPortal()">
-                            Open Human Approval Portal (v1)
-                        </button>
+                <div class="approval-card" id="approvalCard">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <strong style="font-size: 14px;" id="cardEpicTitle">No Active Approval</strong>
+                        <span style="font-size: 11px; background: rgba(56,189,248,0.15); color: var(--accent-blue); padding: 2px 8px; border-radius: 10px;" id="cardStage">WAITING</span>
                     </div>
+                    <p style="font-size: 12.5px; color: var(--text-muted);" id="cardDesc">Create an Epic in Jira to trigger the 5-Agent Fleet.</p>
+                    
+                    <a href="#" id="approvalLinkBtn" class="btn" target="_blank" style="display: none;">
+                        Open Human Approval Portal
+                    </a>
                 </div>
             </div>
         </div>
     </main>
 
     <footer>
-        NexusDev AI &bull; All Things Agentic Hackathon Submission &bull; Powered by Gemini 3.5 Pro, Google ADK & Google Cloud Run
+        NexusDev AI &bull; All Things Agentic Hackathon Submission &bull; Powered by Gemini 3.5 Pro, Google ADK 2.0 & Google Cloud Run
     </footer>
 
     <script>
         const backendUrl = "http://localhost:8000";
+        let seenTraceIds = new Set();
 
-        let currentApprovalUrl = `${backendUrl}/api/v1/approve/view?token=tok-demo-123`;
-
-        function appendLog(agent, message) {
+        function appendLog(agent, message, timestamp) {
             const consoleBox = document.getElementById("consoleBox");
-            const time = new Date().toLocaleTimeString();
+            const time = timestamp ? new Date(timestamp).toLocaleTimeString() : new Date().toLocaleTimeString();
             const logEntry = document.createElement("div");
             logEntry.className = "log-entry";
             logEntry.innerHTML = `<span class="log-time">[${time}]</span> <span class="log-agent">${agent}:</span> <span class="log-msg">${message}</span>`;
@@ -264,38 +298,106 @@
             consoleBox.scrollTop = consoleBox.scrollHeight;
         }
 
-        async function triggerDecomposition() {
-            const epicKey = document.getElementById("epicKeyInput").value;
-            const feedback = document.getElementById("feedbackInput").value;
+        function updateStepCircles(event_type, details = {}) {
+            const stage = (details && details.stage) ? details.stage : "";
             
-            appendLog("PM_DECOMPOSER_AGENT", `Fetching Epic ${epicKey} from Jira...`);
+            // Map event_type / stage to active step index (1-based)
+            let currentStepIdx = 1;
+            if (event_type === "PROD_DEPLOYMENT" || stage === "PRODUCTION_RELEASE" || stage === "PRODUCTION_RELEASE_SUCCESS" || stage === "RELEASED_TO_PRODUCTION") {
+                currentStepIdx = 6;
+            } else if (event_type === "QA_DEPLOYMENT" || stage === "RELEASE") {
+                currentStepIdx = 5;
+            } else if (event_type === "GITOPS_COMMIT" || stage === "DEVELOPMENT") {
+                currentStepIdx = 4;
+            } else if (event_type === "SECURITY_AUDIT") {
+                currentStepIdx = 3;
+            } else if (event_type === "CODE_GENERATION" || event_type === "SELF_CORRECTION") {
+                currentStepIdx = 2;
+            } else { // EPIC_DECOMPOSITION, EMAIL_NOTIFICATION_SENT for DECOMPOSITION
+                currentStepIdx = 1;
+            }
 
-            try {
-                const response = await fetch(`${backendUrl}/api/v1/epics/decompose`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ epic_key: epicKey, human_feedback: feedback })
-                });
-                const data = await response.json();
-                
-                appendLog("GEMINI_3.6_FLASH", `Decomposed Epic into ${data.tasks.length} tasks and created Jira User Stories!`);
-                data.tasks.forEach(task => {
-                    appendLog("AGENT_FLEET", `Task Created: [${task.component_type}] ${task.title}`);
-                });
-                
-                // Update approval URL if token was returned
-                if (data.approval_token) {
-                    currentApprovalUrl = `${backendUrl}/api/v1/approve/view?token=${data.approval_token}`;
+            const stepLabels = [
+                "Step 1/6 — PM Decomposition (Awaiting Gate #1 Approval)",
+                "Step 2/6 — Apex & LWC Code Generation (Self-Correction Active)",
+                "Step 3/6 — Security Audit (Gemma 2 Model Armor Evaluation)",
+                "Step 4/6 — GitOps Version Control (Awaiting Gate #2 Approval)",
+                "Step 5/6 — QA Sandbox Deploy (Awaiting Gate #3 Release Approval)",
+                "Step 6/6 — Live Production Release Completed 🎉"
+            ];
+
+            for (let i = 1; i <= 6; i++) {
+                const el = document.getElementById(`step${i}Circle`);
+                if (!el) continue;
+                if (i < currentStepIdx) {
+                    el.className = "step-circle complete"; // Past steps are Green
+                } else if (i === currentStepIdx) {
+                    el.className = "step-circle active";   // Current step is Pulsing Blue
+                } else {
+                    el.className = "step-circle";          // Future steps are Grey
                 }
-                appendLog("APPROVAL_ENGINE", `Generated Approval Token for PM sign-off. Click Open Human Approval Portal button.`);
-            } catch (e) {
-                appendLog("ERROR", `Failed to connect to backend: ${e.message}`);
+            }
+
+            const progressEl = document.getElementById("progressText");
+            if (progressEl && stepLabels[currentStepIdx - 1]) {
+                progressEl.innerText = stepLabels[currentStepIdx - 1];
             }
         }
 
-        function openApprovalPortal() {
-            window.open(currentApprovalUrl, "_blank");
+        async function fetchTelemetryTraces() {
+            try {
+                const res = await fetch(`${backendUrl}/api/v1/telemetry/traces`);
+                if (!res.ok) return;
+                const data = await res.json();
+                
+                // 1. Process active session state from Memory Bank if available
+                if (data.active_session) {
+                    const sess = data.active_session;
+                    if (sess.epic_key) {
+                        document.getElementById("activeEpicKey").innerText = sess.epic_key;
+                        document.getElementById("cardEpicTitle").innerText = `Epic ${sess.epic_key}`;
+                    }
+                    if (sess.epic_summary) {
+                        document.getElementById("activeEpicSummary").innerText = sess.epic_summary;
+                        document.getElementById("cardDesc").innerText = `Active Epic: ${sess.epic_summary}`;
+                    }
+                    if (sess.current_stage) {
+                        document.getElementById("activeStageBadge").innerText = `STAGE: ${sess.current_stage}`;
+                        document.getElementById("cardStage").innerText = sess.current_stage;
+                        updateStepCircles(sess.current_stage, { stage: sess.current_stage });
+                    }
+                }
+
+                // 2. Process active HITL approval token if available
+                if (data.active_approval) {
+                    const appr = data.active_approval;
+                    const btn = document.getElementById("approvalLinkBtn");
+                    btn.href = appr.approval_url;
+                    btn.innerText = `Open Human Approval Portal (${appr.stage || 'Active'})`;
+                    btn.style.display = "block";
+                    document.getElementById("activeStatus").innerText = `Pending ${appr.stage} Approval`;
+                    document.getElementById("activeStatus").style.color = "var(--accent-yellow)";
+                }
+
+                // 3. Process trace spans in telemetry console
+                const traces = data.traces || data.recent_traces || [];
+                if (Array.isArray(traces)) {
+                    traces.forEach(trace => {
+                        const uniqueKey = `${trace.trace_id}-${trace.span_id}`;
+                        if (!seenTraceIds.has(uniqueKey)) {
+                            seenTraceIds.add(uniqueKey);
+                            appendLog(trace.agent_name || "AGENT_FLEET", trace.summary || trace.event_type, trace.timestamp);
+                        }
+                    });
+                }
+            } catch (e) {
+                // Silent fallback
+            }
         }
+
+        // Auto-poll telemetry traces every 2 seconds
+        setInterval(fetchTelemetryTraces, 2000);
+        fetchTelemetryTraces();
     </script>
 </body>
 </html>

@@ -77,7 +77,7 @@ class SalesforceService:
             settings.sf_dev_org_username,
             settings.sf_qa_org_username,
             settings.sf_prod_org_username,
-            "dev-org", "qa-org", "prod-org"
+            "dev-org", "qa-org", "prod-org", "target-org"
         }
 
     def run_apex_tests(self, target_org: str = None) -> dict:

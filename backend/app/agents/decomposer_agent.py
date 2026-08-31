@@ -23,10 +23,17 @@ class PMDecomposerAgent:
             logger.warning("Gemini API key not found in environment settings. Falling back to mock decomposition for local dev.")
             return self._mock_decomposition(epic_key, epic_summary, human_feedback)
 
-        system_instruction = """
+        from pathlib import Path
+        base_dir = Path(__file__).resolve().parent.parent.parent.parent
+        skill_file = base_dir / ".agents" / "skills" / "epic-decomposition" / "SKILL.md"
+        skill_context = skill_file.read_text(encoding="utf-8") if skill_file.exists() else ""
+
+        system_instruction = f"""
         You are an expert Enterprise Product Manager & Lead Architect specializing in Salesforce, Jira, and Cloud Engineering.
         Your job is to decompose high-level Jira Epics into actionable, isolated User Stories and Development Tasks.
-        For each task, specify exact component types (ApexClass, ApexTrigger, LWC, ApexTest) and technical specifications.
+        
+        SKILL INSTRUCTIONS (epic-decomposition):
+        {skill_context}
         """
 
         prompt = f"""
@@ -45,8 +52,10 @@ class PMDecomposerAgent:
             Please mutate and update the decomposition plan to strictly reflect this human feedback.
             """
 
+        from app.agents.adk_tools import get_jira_epic_context, create_jira_story_task
+
         try:
-            logger.info(f"Invoking Gemini for Epic {epic_key} decomposition...")
+            logger.info(f"Invoking Gemini 3.6 Flash (ADK AFC Enabled) for Epic {epic_key} decomposition...")
             try:
                 response = self.client.models.generate_content(
                     model="gemini-3.6-flash",
@@ -55,6 +64,7 @@ class PMDecomposerAgent:
                         system_instruction=system_instruction,
                         response_mime_type="application/json",
                         response_schema=DecompositionResult,
+                        tools=[get_jira_epic_context, create_jira_story_task],
                         temperature=0.2
                     )
                 )
@@ -74,6 +84,15 @@ class PMDecomposerAgent:
             # Parsed Pydantic response
             result = DecompositionResult.model_validate_json(response.text)
             logger.info(f"Successfully decomposed Epic {epic_key} into {len(result.tasks)} tasks.")
+
+            from app.services.telemetry import telemetry
+            telemetry.log_agent_event(
+                agent_name="PM Decomposer Agent",
+                event_type="EPIC_DECOMPOSITION",
+                pipeline_id=f"pipe-{epic_key.lower()}",
+                summary=f"Decomposed Epic {epic_key} into {len(result.tasks)} technical task specs.",
+                details={"epic_key": epic_key, "task_count": len(result.tasks), "tasks": [t.title for t in result.tasks]}
+            )
             return result
 
         except Exception as e:

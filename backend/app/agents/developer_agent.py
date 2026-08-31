@@ -25,11 +25,18 @@ class SalesforceDeveloperAgent:
             logger.warning("Gemini API key not configured. Returning mock Salesforce code.")
             return self._mock_code_generation(task_spec, previous_errors)
 
-        system_instruction = """
+        from pathlib import Path
+        base_dir = Path(__file__).resolve().parent.parent.parent.parent
+        skill_file = base_dir / ".agents" / "skills" / "salesforce-governance" / "SKILL.md"
+        skill_context = skill_file.read_text(encoding="utf-8") if skill_file.exists() else ""
+
+        system_instruction = f"""
         You are an expert Senior Salesforce Developer.
-        Your job is to generate clean, production-ready Salesforce code (Apex Class, Apex Trigger, LWC, or Apex Unit Test)
-        following Salesforce security best practices (SOQL bulkification, 'with sharing', no hardcoded IDs).
-        CRITICAL: Always use standard Salesforce objects (Lead, Contact, Account, Opportunity) and standard fields (FirstName, LastName, Email, Phone, Company) for maximum deployment compatibility across standard Developer orgs. Avoid assuming custom objects like Student_Application__c exist unless explicitly requested.
+        Your job is to generate clean, production-ready Salesforce code (Apex Class, Apex Trigger, LWC, or Apex Unit Test).
+        
+        SKILL INSTRUCTIONS (salesforce-governance):
+        {skill_context}
+
         Return ONLY valid code without Markdown formatting backticks if possible.
         """
 
@@ -50,14 +57,17 @@ class SalesforceDeveloperAgent:
             Analyze the stack trace, fix the issue in the code, and return the corrected code.
             """
 
+        from app.agents.adk_tools import run_salesforce_unit_tests, save_apex_workspace_file
+
         try:
-            logger.info(f"Invoking Gemini code generator for task: {task_spec.get('title')}...")
+            logger.info(f"Invoking Gemini 3.6 Flash (ADK AFC Enabled) code generator for task: {task_spec.get('title')}...")
             try:
                 response = self.client.models.generate_content(
                     model="gemini-3.6-flash",
                     contents=prompt,
                     config=types.GenerateContentConfig(
                         system_instruction=system_instruction,
+                        tools=[run_salesforce_unit_tests, save_apex_workspace_file],
                         temperature=0.1
                     )
                 )
@@ -97,6 +107,21 @@ class SalesforceDeveloperAgent:
             
             # Step 3: Run SF CLI Unit Tests (or Mock Test)
             test_result = salesforce_service.run_apex_tests(target_org=target_org)
+            
+            from app.services.telemetry import telemetry
+            event_type = "SELF_CORRECTION" if attempt > 1 else "CODE_GENERATION"
+            telemetry.log_agent_event(
+                agent_name="Salesforce Developer Agent",
+                event_type=event_type,
+                pipeline_id=f"pipe-{task_spec.get('target_filename', 'task')}",
+                summary=f"Attempt {attempt}/{self.max_retries}: Generated {task_spec.get('component_type')} ({task_spec.get('target_filename')})",
+                details={
+                    "attempt": attempt,
+                    "target_filename": task_spec.get("target_filename"),
+                    "component_type": task_spec.get("component_type"),
+                    "test_status": test_result.get("status")
+                }
+            )
             
             # Check test outcome
             status_code = test_result.get("status", 0)
@@ -180,13 +205,45 @@ class SalesforceDeveloperAgent:
             js_file = lwc_dir / f"{lwc_name}.js"
             js_file.write_text(clean_code)
 
-            # Generate basic HTML template
+            # Generate rich HTML template
             html_file = lwc_dir / f"{lwc_name}.html"
-            if not html_file.exists():
+            if not html_file.exists() or len(html_file.read_text().strip()) < 300:
                 html_content = f"""<template>
-    <lightning-card title="{task_spec.get('title')}">
+    <lightning-card title="{task_spec.get('title', 'Student Scholarship Application Portal')}" icon-name="standard:education">
         <div class="slds-m-around_medium">
-            <p>Student Application Form Component</p>
+            <div class="slds-grid slds-gutters slds-m-bottom_small">
+                <div class="slds-col slds-size_1-of-2">
+                    <lightning-input label="First Name" name="firstName" value={{firstName}} onchange={{handleInputChange}} required></lightning-input>
+                </div>
+                <div class="slds-col slds-size_1-of-2">
+                    <lightning-input label="Last Name" name="lastName" value={{lastName}} onchange={{handleInputChange}} required></lightning-input>
+                </div>
+            </div>
+            <div class="slds-grid slds-gutters slds-m-bottom_small">
+                <div class="slds-col slds-size_1-of-2">
+                    <lightning-input label="Email Address" type="email" name="email" value={{email}} onchange={{handleInputChange}} required></lightning-input>
+                </div>
+                <div class="slds-col slds-size_1-of-2">
+                    <lightning-input label="Phone Number" type="tel" name="phone" value={{phone}} onchange={{handleInputChange}}></lightning-input>
+                </div>
+            </div>
+            <div class="slds-grid slds-gutters slds-m-bottom_small">
+                <div class="slds-col slds-size_1-of-2">
+                    <lightning-input label="High School / Previous Institution" name="highSchool" value={{highSchool}} onchange={{handleInputChange}}></lightning-input>
+                </div>
+                <div class="slds-col slds-size_1-of-2">
+                    <lightning-input label="Cumulative GPA" type="number" step="0.01" min="0" max="4.0" name="gpa" value={{gpa}} onchange={{handleInputChange}} required></lightning-input>
+                </div>
+            </div>
+            <div class="slds-m-bottom_small">
+                <lightning-combobox name="programOfInterest" label="Program of Interest" value={{programOfInterest}} placeholder="Select Program" options={{programOptions}} onchange={{handleInputChange}} required></lightning-combobox>
+            </div>
+            <div class="slds-m-bottom_small">
+                <lightning-textarea name="personalStatement" label="Personal Statement / Scholarship Justification" value={{personalStatement}} onchange={{handleInputChange}} placeholder="Briefly state your academic goals..." required></lightning-textarea>
+            </div>
+            <div class="slds-m-top_medium slds-text-align_right">
+                <lightning-button label="Submit Scholarship Application" variant="brand" icon-name="utility:send" onclick={{handleSubmit}} disabled={{isSubmitting}}></lightning-button>
+            </div>
         </div>
     </lightning-card>
 </template>"""

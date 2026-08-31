@@ -48,6 +48,23 @@ class ApprovalService:
         )
 
         logger.info(f"Generated Approval Token [{token}] for Pipeline {pipeline_id} at Stage '{stage}'.")
+
+        # Dispatch email notification to stage-specific approver
+        from app.services.email_service import email_service
+        recipient_email = settings.decomposer_approver_email
+        if stage == "DEVELOPMENT":
+            recipient_email = settings.developer_approver_email
+        elif stage in ["RELEASE", "QA_STAGING", "PRODUCTION_RELEASE"]:
+            recipient_email = settings.release_approver_email
+
+        email_service.send_approval_notification(
+            stage_name=stage,
+            approval_token=token,
+            recipient_email=recipient_email,
+            summary_title=f"Pipeline {pipeline_id} Checkpoint ({stage})",
+            details=metadata
+        )
+
         return token
 
     def get_token_details(self, token: str) -> Optional[Dict[str, Any]]:
@@ -75,45 +92,57 @@ class ApprovalService:
             )
 
             if stage == "DECOMPOSITION":
-                # Stage 1 Approved -> Trigger Developer Agent & Git Commit -> Create Stage 2 Token
+                # Stage 1 Approved -> Trigger Developer Agent, GitOps Agent, and Security Audit -> Create Stage 2 Token
                 from app.agents.developer_agent import developer_agent
                 from app.agents.security_agent import security_agent
+                from app.agents.git_agent import git_agent
+
+                session = memory_bank.get_pipeline_session(pipeline_id) or {}
+                epic_key = session.get("epic_key", "SCRUM-1")
+                epic_summary = session.get("epic_summary", "Salesforce Feature")
+                branch_name = f"feature/{epic_key.lower()}-dev-bundle"
 
                 generated_components = []
-                last_git_info = {}
                 default_tasks = [
-                    {"title": "Student Application LWC Form UI", "component_type": "LWC", "target_filename": "studentApplicationForm.js", "description": "LWC form for student registration"},
-                    {"title": "Student Application Apex Controller", "component_type": "ApexClass", "target_filename": "StudentApplicationController.cls", "description": "Apex controller to submit applications"},
-                    {"title": "Student Application Unit Tests", "component_type": "ApexTest", "target_filename": "StudentApplicationControllerTest.cls", "description": "Unit tests for StudentApplicationController"}
+                    {"title": f"{epic_summary} LWC Form UI", "component_type": "LWC", "target_filename": "studentApplicationForm.js", "description": "LWC form for student registration"},
+                    {"title": f"{epic_summary} Apex Controller", "component_type": "ApexClass", "target_filename": "StudentApplicationController.cls", "description": "Apex controller to submit applications"},
+                    {"title": f"{epic_summary} Unit Tests", "component_type": "ApexTest", "target_filename": "StudentApplicationControllerTest.cls", "description": "Unit tests for StudentApplicationController"}
                 ]
                 for t in default_tasks:
                     try:
                         res = developer_agent.develop_and_test_with_self_correction(t)
                         if res.get("saved_filepath"):
                             generated_components.append(res.get("saved_filepath"))
-                            last_git_info = {"branch": res.get("git_branch"), "commit_sha": res.get("commit_sha")}
                     except Exception as e_dev:
                         logger.warning(f"Error generating Salesforce component '{t.get('title')}': {e_dev}")
 
-                # Security Audit via Gemma 2 / Model Armor
-                audit_res = security_agent.audit_component("StudentApplicationController", "public with sharing class StudentApplicationController {}")
+                # Trigger GitOps Agent (ADK Agent #4): AI Commit Message & PR Summary Generation
+                git_res = git_agent.commit_and_generate_pr(
+                    task_title=f"{epic_key}: {epic_summary}",
+                    branch_name=branch_name
+                )
+
+                # Security Audit via Gemma 2 / Model Armor (ADK Agent #3)
+                audit_res = security_agent.audit_code_security("public with sharing class StudentApplicationController {}", "StudentApplicationController")
 
                 # Generate Stage 2 Token for Code & Git Commit Sign-off (Before Test Org Deployment)
                 next_token = self.generate_approval_token(
                     pipeline_id=pipeline_id,
                     stage="DEVELOPMENT",
                     metadata={
-                        "preview_text": f"Git Branch: {last_git_info.get('branch', 'feature/SCRUM-1')}\nLatest Commit SHA: {last_git_info.get('commit_sha', 'head-commit')}\nSecurity Score: {audit_res.get('score')}/100\nCode files committed in force-app/.\nClick Approve to deploy code to Testing Salesforce Org ({settings.sf_test_org_username})."
+                        "preview_text": f"Git Branch: {git_res.get('branch')}\nCommit SHA: {git_res.get('commit_sha')}\nCommit Message: {git_res.get('commit_message')}\nSecurity Risk Score: {audit_res.get('risk_score', 0)}/10\n\nPull Request Summary:\n{git_res.get('pr_summary')[:300]}..."
                     }
                 )
 
                 return {
                     "success": True,
                     "status": "APPROVED",
-                    "message": f"Stage 1 approved! Code committed to Git branch '{last_git_info.get('branch')}'. Advanced to Stage 2 (Code & Git Verification).",
+                    "message": f"Stage 1 approved! GitOps Agent committed changes to '{git_res.get('branch')}' ({git_res.get('commit_sha')}). Advanced to Stage 2.",
                     "pipeline_id": pipeline_id,
-                    "git_branch": last_git_info.get("branch"),
-                    "commit_sha": last_git_info.get("commit_sha"),
+                    "git_branch": git_res.get("branch"),
+                    "commit_sha": git_res.get("commit_sha"),
+                    "commit_message": git_res.get("commit_message"),
+                    "pr_summary": git_res.get("pr_summary"),
                     "generated_components": generated_components,
                     "next_stage": "DEVELOPMENT",
                     "next_approval_token": next_token,
@@ -121,44 +150,61 @@ class ApprovalService:
                 }
 
             elif stage == "DEVELOPMENT":
-                # Stage 2 Approved -> Deploy Code to QA Staging Salesforce Org -> Create Stage 3 Token
-                from app.services.salesforce_service import salesforce_service
-                logger.info(f"Stage 2 Code Verified! Deploying force-app/ to QA Staging Salesforce Org '{settings.sf_qa_org_username}'...")
-                qa_deploy_res = salesforce_service.deploy_metadata(target_org=settings.sf_qa_org_username, source_dir="force-app")
+                # Stage 2 Approved -> Trigger Enterprise Release Agent (ADK Agent #5) -> Deploy to QA Testing Org
+                from app.agents.release_agent import release_agent
+                logger.info(f"Stage 2 Code Verified! Enterprise Release Agent deploying to QA Testing Org '{settings.sf_qa_org_username}'...")
+                
+                qa_release = release_agent.validate_and_deploy_release(
+                    target_org=settings.sf_qa_org_username,
+                    stage_name="QA_TESTING_ORG"
+                )
 
                 # Generate Stage 3 Token for Production Release Sign-off
                 next_token = self.generate_approval_token(
                     pipeline_id=pipeline_id,
                     stage="RELEASE",
                     metadata={
-                        "preview_text": f"DEPLOYED TO QA STAGING SALESFORCE ORG ({settings.sf_qa_org_username})!\nQA Org Deployment Status: {qa_deploy_res.get('status', 0)}\n\nHuman QA can now test in QA Sandbox Org ({settings.sf_qa_org_username}).\nOnce QA passes, click Approve to release & deploy to Production Salesforce Org ({settings.sf_prod_org_username})."
+                        "preview_text": f"DEPLOYED TO QA STAGING SALESFORCE ORG ({settings.sf_qa_org_username})!\nDeployment ID: {qa_release.get('deployment_id')}\nGovernance Score: {qa_release.get('governance_score')}/100\n\nEnterprise Release Notes:\n{qa_release.get('release_notes')[:300]}..."
                     }
                 )
                 return {
                     "success": True,
                     "status": "APPROVED",
-                    "message": f"Stage 2 approved! Code deployed to QA Staging Salesforce Org ('{settings.sf_qa_org_username}'). Advanced to Stage 3 (Production Release Sign-off).",
+                    "message": f"Stage 2 approved! Enterprise Release Agent deployed code to QA Testing Org ('{settings.sf_qa_org_username}'). Advanced to Stage 3.",
                     "pipeline_id": pipeline_id,
                     "qa_org": settings.sf_qa_org_username,
-                    "qa_deployment_result": qa_deploy_res,
+                    "qa_deployment_result": qa_release.get("deployment_result"),
+                    "qa_release_notes": qa_release.get("release_notes"),
                     "next_stage": "RELEASE",
                     "next_approval_token": next_token,
                     "next_approval_url": f"{settings.approval_base_url}/api/v1/approve/view?token={next_token}"
                 }
 
             elif stage == "RELEASE":
-                # Stage 3 Approved -> Deploy Code to Production Salesforce Org
-                from app.services.salesforce_service import salesforce_service
-                logger.info(f"Stage 3 Release Approved! Executing live deployment to Production Salesforce Org '{settings.sf_prod_org_username}'...")
-                prod_deploy_res = salesforce_service.deploy_metadata(target_org=settings.sf_prod_org_username, source_dir="force-app")
+                # Stage 3 Approved -> Trigger Enterprise Release Agent (ADK Agent #5) -> Live Production Release
+                from app.agents.release_agent import release_agent
+                logger.info(f"Stage 3 Release Approved! Enterprise Release Agent executing live release to Production Org '{settings.sf_prod_org_username}'...")
+                
+                prod_release = release_agent.validate_and_deploy_release(
+                    target_org=settings.sf_prod_org_username,
+                    stage_name="PRODUCTION_RELEASE"
+                )
+
+                memory_bank.update_pipeline_state(
+                    pipeline_id=pipeline_id,
+                    status="PRODUCTION_RELEASE_SUCCESS",
+                    stage="PRODUCTION_RELEASE",
+                    payload_update={"production_release_notes": prod_release.get("release_notes")}
+                )
                 
                 return {
                     "success": True,
                     "status": "RELEASED_TO_PRODUCTION",
-                    "message": f"Stage 3 approved! Live deployment executed to Production Salesforce Org '{settings.sf_prod_org_username}'. Deployment Status: {prod_deploy_res.get('status')}",
+                    "message": f"Stage 3 approved! Enterprise Release Agent completed live release to Production Org '{settings.sf_prod_org_username}'.",
                     "pipeline_id": pipeline_id,
                     "production_org": settings.sf_prod_org_username,
-                    "production_deployment_result": prod_deploy_res
+                    "production_deployment_result": prod_release.get("deployment_result"),
+                    "production_release_notes": prod_release.get("release_notes")
                 }
 
         elif action == "request_changes":

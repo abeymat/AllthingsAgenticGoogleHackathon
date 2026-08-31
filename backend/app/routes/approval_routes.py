@@ -20,6 +20,13 @@ def render_approval_portal(token: str = Query(...)):
     pipeline_state = memory_bank.get_pipeline_session(pipeline_id) or {}
     meta = details.get("metadata", {})
 
+    next_step_explanations = {
+        "DECOMPOSITION": "<strong>⚡ Next Step Upon Approval:</strong> The <strong>Salesforce Developer Agent (Gemini 3.5 Pro)</strong> will generate Apex classes, LWC bundles, and unit tests with automated self-correction test loops. Next, <strong>Security Agent (Gemma 2)</strong> will audit code safety, and <strong>GitOps Agent</strong> will commit the feature branch for Stage 2 sign-off.",
+        "DEVELOPMENT": "<strong>⚡ Next Step Upon Approval:</strong> The <strong>Enterprise Release Agent (Gemini 3.6 Flash)</strong> will execute pre-flight metadata deployment checks to your <strong>QA Sandbox Org</strong> (abeycm@curious-fox-3xbrbu.com) and dispatch your Stage 3 Production Release Approval Email.",
+        "RELEASE": "<strong>⚡ Next Step Upon Approval:</strong> The <strong>Enterprise Release Agent</strong> will execute live metadata deployment to your <strong>Production Salesforce Org</strong> (epic.8fb9d0d7217c@orgfarm.salesforce.com) and publish Enterprise Release Notes!"
+    }
+    next_explanation = next_step_explanations.get(stage, "Processing next automated SDLC stage...")
+
     html_content = f"""
     <!DOCTYPE html>
     <html>
@@ -31,6 +38,7 @@ def render_approval_portal(token: str = Query(...)):
             .card {{ max-width: 700px; margin: 30px auto; background-color: #1e293b; border-radius: 12px; padding: 30px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); border: 1px solid #334155; }}
             h1 {{ color: #38bdf8; font-size: 24px; margin-top: 0; }}
             .badge {{ display: inline-block; background-color: #0284c7; color: white; padding: 4px 12px; border-radius: 20px; font-weight: 600; font-size: 12px; text-transform: uppercase; margin-bottom: 15px; }}
+            .next-step-box {{ background-color: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 8px; padding: 14px; font-size: 13.5px; color: #7dd3fc; margin-bottom: 20px; line-height: 1.5; }}
             .content-box {{ background-color: #090d16; border: 1px solid #334155; border-radius: 8px; padding: 15px; font-family: monospace; white-space: pre-wrap; font-size: 13px; max-height: 250px; overflow-y: auto; color: #a5f3fc; margin-bottom: 20px; }}
             textarea {{ width: 100%; height: 80px; background-color: #090d16; border: 1px solid #475569; border-radius: 6px; color: white; padding: 10px; font-family: inherit; font-size: 14px; margin-bottom: 15px; box-sizing: border-box; }}
             .btn-group {{ display: flex; gap: 10px; }}
@@ -49,7 +57,12 @@ def render_approval_portal(token: str = Query(...)):
             <span class="badge">Stage: {stage} Approval Checkpoint</span>
             <h1>NexusDev AI - Human Sign-off</h1>
             <p><strong>Pipeline ID:</strong> {pipeline_id}</p>
+            <p><strong>Epic Key:</strong> {pipeline_state.get('epic_key', 'SCRUM-EPIC')}</p>
             <p><strong>Epic Summary:</strong> {pipeline_state.get('epic_summary', 'Salesforce SDLC Task')}</p>
+
+            <div class="next-step-box">
+                {next_explanation}
+            </div>
             
             <h3>Artifact for Review:</h3>
             <div class="content-box">{meta.get('preview_text', 'Artifact review content ready.')}</div>

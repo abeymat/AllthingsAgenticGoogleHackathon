@@ -43,6 +43,17 @@ class Settings(BaseSettings):
     approval_base_url: str = "http://localhost:8000"
     notification_email_to: str = ""
 
+    # 3 Stage-Specific Human Approval Recipient Emails
+    decomposer_approver_email: str = "abeycm@gmail.com"
+    developer_approver_email: str = "abeycm@gmail.com"
+    release_approver_email: str = "abeycm@gmail.com"
+
+    # Optional SMTP Email Dispatch Configuration
+    smtp_server: str = "smtp.gmail.com"
+    smtp_port: int = 587
+    smtp_username: str = "abeycm@gmail.com"
+    smtp_password: str = "afcv xbyn tokh jhhi"
+
     model_config = SettingsConfigDict(
         env_file=ENV_FILE if ENV_FILE.exists() else None,
         env_file_encoding="utf-8",

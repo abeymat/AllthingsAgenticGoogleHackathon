@@ -58,6 +58,20 @@ class SecurityGovernanceAgent:
             import json
             audit_result = json.loads(response.text)
             logger.info(f"Security Audit completed for {component_name}. Passed: {audit_result.get('passed')}")
+
+            from app.services.telemetry import telemetry
+            telemetry.log_agent_event(
+                agent_name="Security Governance Agent",
+                event_type="SECURITY_AUDIT",
+                pipeline_id=f"pipe-{component_name.lower()}",
+                summary=f"Audit completed for {component_name}. Score: {audit_result.get('risk_score', 100)}/100",
+                details={
+                    "component_name": component_name,
+                    "passed": audit_result.get("passed", True),
+                    "risk_score": audit_result.get("risk_score", 100),
+                    "vulnerabilities": audit_result.get("vulnerabilities_found", [])
+                }
+            )
             return audit_result
         except Exception as e:
             logger.error(f"Error in Security Audit: {e}")
